@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cabt2hecdyoi3"
-path="res://.godot/imported/jetpack.jpg-1e19db7ea961b458acc5d53fcff642bc.ctex"
+path="res://.godot/imported/jetpack.jpg-6472cda2e8ecee2a2ec6b5343c0fab47.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://builds/journal_public/img/jetpack.jpg"
-dest_files=["res://.godot/imported/jetpack.jpg-1e19db7ea961b458acc5d53fcff642bc.ctex"]
+source_file="res://docs/journal/img/jetpack.jpg"
+dest_files=["res://.godot/imported/jetpack.jpg-6472cda2e8ecee2a2ec6b5343c0fab47.ctex"]
 
 [params]
 

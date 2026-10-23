@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ccv7nmuv2w11h"
-path="res://.godot/imported/lure.jpg-24bc48d556efa9d137b37768cf1918dd.ctex"
+path="res://.godot/imported/lure.jpg-fbb4852284096056930c9ccc9f2da41f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://builds/journal_public/img/lure.jpg"
-dest_files=["res://.godot/imported/lure.jpg-24bc48d556efa9d137b37768cf1918dd.ctex"]
+source_file="res://docs/journal/img/lure.jpg"
+dest_files=["res://.godot/imported/lure.jpg-fbb4852284096056930c9ccc9f2da41f.ctex"]
 
 [params]
 

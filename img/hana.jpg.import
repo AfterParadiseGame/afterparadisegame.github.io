@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bs5jixamlqkdc"
-path="res://.godot/imported/hana.jpg-6e8126c8293d0942cd70c1c6f64858c5.ctex"
+path="res://.godot/imported/hana.jpg-bf7734fbd42f176d85fd5a9ce7fc1edf.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://builds/journal_public/img/hana.jpg"
-dest_files=["res://.godot/imported/hana.jpg-6e8126c8293d0942cd70c1c6f64858c5.ctex"]
+source_file="res://docs/journal/img/hana.jpg"
+dest_files=["res://.godot/imported/hana.jpg-bf7734fbd42f176d85fd5a9ce7fc1edf.ctex"]
 
 [params]
 
