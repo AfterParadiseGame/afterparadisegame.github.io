@@ -286,6 +286,16 @@ footer .wrap { border-top: 1px solid var(--steel); padding-top: 18px; }
   @keyframes pulse { 50% { opacity: .45; } }
 }
 
+/* ---------- back to top ---------- */
+.to-top {
+  position: fixed; z-index: 15;
+  right: max(16px, env(safe-area-inset-right, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  font: 600 13px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--cyan); background: var(--plate); border: 1px solid var(--cyan-deep);
+  padding: 12px 14px; cursor: pointer; box-shadow: 0 0 14px rgba(79,214,255,.18);
+}
+.to-top:hover { color: var(--ink); border-color: var(--cyan); }
+
 /* ---------- zoom ---------- */
 [hidden] { display: none !important; }
 .shot img, .entry figure img { cursor: zoom-in; }
@@ -637,6 +647,8 @@ footer .wrap { border-top: 1px solid var(--steel); padding-top: 18px; }
   <div class="wrap">After Paradise · Godot 4 · Terra, сектор высадки. Графика создана с помощью ИИ. Журнал обновляется после каждого рабочего дня.</div>
 </footer>
 
+<button type="button" class="to-top" id="to-top" hidden aria-label="Наверх страницы">↑ Наверх</button>
+
 <div class="zoom" id="zoom" hidden role="dialog" aria-modal="true" aria-label="Картинка крупно">
   <button type="button" id="zoom-close">Закрыть</button>
   <img id="zoom-img" alt="">
@@ -653,6 +665,11 @@ footer .wrap { border-top: 1px solid var(--steel); padding-top: 18px; }
     img.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
   });
   box.addEventListener('click', close);
+  var top = document.getElementById('to-top');
+  function toggleTop() { top.hidden = window.scrollY < 600; }
+  window.addEventListener('scroll', toggleTop, { passive: true });
+  toggleTop();
+  top.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !box.hidden) close(); });
 })();
 </script>
