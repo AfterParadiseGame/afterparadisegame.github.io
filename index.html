@@ -224,6 +224,16 @@ ul.left li::before { content: ""; position: absolute; left: 2px; top: .62em; wid
 }
 .comms .who { font: 600 12px/1 var(--font-mono); color: var(--acid); letter-spacing: .08em; display: block; margin-bottom: 6px; }
 
+/* ---------- bestiary ---------- */
+.beasts { display: grid; gap: 14px; }
+.beast .in { padding: 18px 20px 20px; display: grid; gap: 10px; }
+.beast .role { font: 600 12px/1 var(--font-mono); color: var(--amber); letter-spacing: .08em; text-transform: uppercase; }
+.beast h3 { font: 700 22px/1.2 var(--font-display); margin: 0; }
+.sheets { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+.sheets figure { margin: 0; }
+.sheets img { width: 100%; height: auto; display: block; border: 1px solid var(--steel); background: #e9eef2; cursor: zoom-in; }
+.sheets figcaption { font: 12px/1.4 var(--font-mono); color: var(--ink-dim); margin-top: 6px; }
+
 /* ---------- log ---------- */
 .log { display: grid; gap: 0; position: relative; }
 .entry { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 22px; padding: 22px 0; border-top: 1px dashed var(--steel); }
@@ -316,6 +326,7 @@ footer .wrap { border-top: 1px solid var(--steel); padding-top: 18px; }
   <div class="wrap">
     <a href="#campaign">Кампания</a>
     <a href="#log">Журнал</a>
+    <a href="#bestiary">Бестиарий</a>
     <a href="#next">Дальше</a>
   </div>
 </nav>
@@ -586,6 +597,25 @@ footer .wrap { border-top: 1px solid var(--steel); padding-top: 18px; }
   </div>
 </section>
 
+<section id="bestiary">
+  <div class="wrap">
+    <div class="eyebrow">Бестиарий</div>
+    <h2>Мутанты в эскизах</h2>
+    <p class="sec-note">Кухня художника: эскизы мутантов, которых мы придумываем для игры. Каждого мутанта придумывает автор — набросок и долгий рассказ, каким он должен быть; Codex рисует эскизы по этому описанию. Не все доберутся до поля боя — что-то поменяется по дороге, что-то останется только здесь. Подписи — полевые заметки Overwatch.</p>
+    <div class="beasts">
+      <article class="plate beast"><div class="in"><span class="role">Огневая поддержка</span><h3>Salvo</h3><div class="comms"><span class="who">OVERWATCH · ПОЛЕВАЯ ЗАМЕТКА</span>Бывший пиротехник: защитная маска так и приросла ко лбу. Держится за спинами своих и бьёт навесом через их головы. Крупная цель над полем — его любимая, Iron Rain стоит беречь.</div><div class="sheets"><figure><img src="img/bestiary/salvo_concept.jpg" alt="Salvo: Первый эскиз, 23.10" loading="lazy"><figcaption>Первый эскиз, 23.10</figcaption></figure><figure><img src="img/bestiary/salvo_views.jpg" alt="Salvo: Спереди, сбоку, сзади" loading="lazy"><figcaption>Спереди, сбоку, сзади</figcaption></figure></div></div></article>
+      <article class="plate beast"><div class="in"><span class="role">Босс Terra</span><h3>Bellows</h3><div class="comms"><span class="who">OVERWATCH · ПОЛЕВАЯ ЗАМЕТКА</span>Раньше командовала аэродромом и до сих пор ходит в форменном кителе. Вместо рук — крылья, вокруг шеи — воротник-фильтр: через него она вдыхает людей и выдыхает кислоту. Прилетает туда, где ещё остались жители.</div><div class="sheets"><figure><img src="img/bestiary/bellows_1009_a.jpg" alt="Bellows: Первый заход, 09.10" loading="lazy"><figcaption>Первый заход, 09.10</figcaption></figure><figure><img src="img/bestiary/bellows_1009_b.jpg" alt="Bellows: Первый заход, вторая версия" loading="lazy"><figcaption>Первый заход, вторая версия</figcaption></figure><figure><img src="img/bestiary/bellows_b1_b4.jpg" alt="Bellows: Четыре образа B1–B4, 20.10" loading="lazy"><figcaption>Четыре образа B1–B4, 20.10</figcaption></figure><figure><img src="img/bestiary/bellows_c1.jpg" alt="Bellows: Вариант C1, 22.10" loading="lazy"><figcaption>Вариант C1, 22.10</figcaption></figure><figure><img src="img/bestiary/bellows_c2.jpg" alt="Bellows: Вариант C2" loading="lazy"><figcaption>Вариант C2</figcaption></figure><figure><img src="img/bestiary/bellows_moth.jpg" alt="Bellows: Вариант A, «моль», 23.10" loading="lazy"><figcaption>Вариант A, «моль», 23.10</figcaption></figure><figure><img src="img/bestiary/bellows_trumpets.jpg" alt="Bellows: Вариант B, «трубы»" loading="lazy"><figcaption>Вариант B, «трубы»</figcaption></figure><figure><img src="img/bestiary/bellows_filter.jpg" alt="Bellows: Вариант C, «фильтр»" loading="lazy"><figcaption>Вариант C, «фильтр»</figcaption></figure></div></div></article>
+      <article class="plate beast"><div class="in"><span class="role">Тяжёлый боец</span><h3>Knuckleback</h3><div class="comms"><span class="who">OVERWATCH · ПОЛЕВАЯ ЗАМЕТКА</span>Ходит на костяшках огромных кулаков, на голове кепка на три размера меньше. Перебрасывает меха через себя, скоро начнёт швыряться бетоном.</div><div class="sheets"><figure><img src="img/bestiary/knuckleback.jpg" alt="Knuckleback: Спереди, сбоку, сзади, 09.10" loading="lazy"><figcaption>Спереди, сбоку, сзади, 09.10</figcaption></figure></div></div></article>
+      <article class="plate beast"><div class="in"><span class="role">Таран</span><h3>Boar</h3><div class="comms"><span class="who">OVERWATCH · ПОЛЕВАЯ ЗАМЕТКА</span>Разгоняется по прямой и бьёт с разбега. Человеческие сапоги так и остались на нём — когда-то в них ходили на работу.</div><div class="sheets"><figure><img src="img/bestiary/boar.jpg" alt="Boar: Спереди, сбоку, сзади" loading="lazy"><figcaption>Спереди, сбоку, сзади</figcaption></figure></div></div></article>
+      <article class="plate beast"><div class="in"><span class="role">Стрелок</span><h3>Headbearer</h3><div class="comms"><span class="who">OVERWATCH · ПОЛЕВАЯ ЗАМЕТКА</span>Во второй руке несёт ещё одну голову, и она плюётся кислотой. Три трубки от живота её кормят. Откуда голова, лучше не спрашивать.</div><div class="sheets"><figure><img src="img/bestiary/headbearer_a.jpg" alt="Headbearer: Первая версия, 09.10" loading="lazy"><figcaption>Первая версия, 09.10</figcaption></figure><figure><img src="img/bestiary/headbearer_b.jpg" alt="Headbearer: Вторая версия" loading="lazy"><figcaption>Вторая версия</figcaption></figure></div></div></article>
+      <article class="plate beast"><div class="in"><span class="role">Охотник</span><h3>Harpooner</h3><div class="comms"><span class="who">OVERWATCH · ПОЛЕВАЯ ЗАМЕТКА</span>Шахтёрская каска, огромное правое плечо и костяной гарпун на сухожилии. Подтягивает добычу к себе, а там бьёт крюком.</div><div class="sheets"><figure><img src="img/bestiary/harpooner.jpg" alt="Harpooner: Спереди, сбоку, сзади, 09.10" loading="lazy"><figcaption>Спереди, сбоку, сзади, 09.10</figcaption></figure></div></div></article>
+      <article class="plate beast"><div class="in"><span class="role">Живая мортира</span><h3>Kilnback</h3><div class="comms"><span class="who">OVERWATCH · ПОЛЕВАЯ ЗАМЕТКА</span>Приземистый, на лямках рабочего комбинезона. Бьёт навесом через горы в заранее выбранную клетку.</div><div class="sheets"><figure><img src="img/bestiary/kilnback.jpg" alt="Kilnback: Спереди, сбоку, сзади, 09.10" loading="lazy"><figcaption>Спереди, сбоку, сзади, 09.10</figcaption></figure></div></div></article>
+      <article class="plate beast"><div class="in"><span class="role">Ловец</span><h3>Stitcher</h3><div class="comms"><span class="who">OVERWATCH · ПОЛЕВАЯ ЗАМЕТКА</span>Обрывок медицинского халата и три полые иглы на кисти. Пришивает мехов к месту липкой нитью.</div><div class="sheets"><figure><img src="img/bestiary/stitcher.jpg" alt="Stitcher: Спереди, сбоку, сзади, 09.10" loading="lazy"><figcaption>Спереди, сбоку, сзади, 09.10</figcaption></figure></div></div></article>
+      <article class="plate beast"><div class="in"><span class="role">Подрывник</span><h3>Broodlung</h3><div class="comms"><span class="who">OVERWATCH · ПОЛЕВАЯ ЗАМЕТКА</span>Живот с тремя пузырями-капсулами и пастью. Подкидывает капсулу, и через ход она взрывается. Старую сумку так и не бросил.</div><div class="sheets"><figure><img src="img/bestiary/broodlung.jpg" alt="Broodlung: Спереди, сбоку, сзади, 09.10" loading="lazy"><figcaption>Спереди, сбоку, сзади, 09.10</figcaption></figure></div></div></article>
+    </div>
+  </div>
+</section>
+
 
 <section id="next">
   <div class="wrap">
@@ -617,7 +647,7 @@ footer .wrap { border-top: 1px solid var(--steel); padding-top: 18px; }
   var box = document.getElementById('zoom');
   var big = document.getElementById('zoom-img');
   function close() { box.hidden = true; big.removeAttribute('src'); }
-  document.querySelectorAll('.shot img, .entry figure img').forEach(function (img) {
+  document.querySelectorAll('.shot img, .entry figure img, .sheets img').forEach(function (img) {
     img.tabIndex = 0;
     function open() { big.src = img.currentSrc || img.src; big.alt = img.alt; box.hidden = false; document.getElementById('zoom-close').focus(); }
     img.addEventListener('click', open);
