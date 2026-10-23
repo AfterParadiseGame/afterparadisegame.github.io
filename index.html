@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Пошаговая тактика про отряд мехов на Земле после «рая». Журнал разработки: что уже работает, какие миссии готовы.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="After Paradise — бортовой журнал">
+<meta property="og:description" content="Пошаговая тактика про отряд мехов на Земле после «рая». Журнал разработки: что уже работает, какие миссии готовы.">
+<meta property="og:url" content="https://erbrugger.github.io/afterparadisegame/">
+<meta property="og:image" content="https://erbrugger.github.io/afterparadisegame/img/hero.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<title>After Paradise — бортовой журнал</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: the battle HUD «Броня» — riveted chamfered steel plates on a dark field, squad cyan for the squad, amber for pilots, acid green for Overwatch. One dark look on purpose, like the game. */
+:root {
+  --field: #0a0f13;
+  --plate: #121a20;
+  --plate-hi: #18232b;
+  --steel: #34434e;
+  --rivet: #5c6d79;
+  --ink: #dbe6ec;
+  --ink-dim: #93a4ae;
+  --cyan: #4fd6ff;
+  --cyan-deep: #1d6f8c;
+  --amber: #f0b24c;
+  --acid: #c9e14b;
+  --red: #ef5a4a;
+  --font-display: "Exo 2", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Exo 2", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --cut: 14px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--field);
+  color: var(--ink);
+  font: 16px/1.55 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+img { display: block; max-width: 100%; height: auto; }
+a { color: var(--cyan); }
+:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+
+.wrap {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* ---------- plate: chamfered, riveted ---------- */
+.plate {
+  position: relative;
+  background: var(--steel);
+  clip-path: polygon(var(--cut) 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, var(--cut) 100%, 0 calc(100% - var(--cut)), 0 var(--cut));
+  padding: 1px;
+}
+.plate > .in {
+  position: relative;
+  height: 100%;
+  background:
+    radial-gradient(circle at 9px 9px, var(--rivet) 0 2.2px, transparent 2.8px),
+    radial-gradient(circle at calc(100% - 9px) 9px, var(--rivet) 0 2.2px, transparent 2.8px),
+    radial-gradient(circle at 9px calc(100% - 9px), var(--rivet) 0 2.2px, transparent 2.8px),
+    radial-gradient(circle at calc(100% - 9px) calc(100% - 9px), var(--rivet) 0 2.2px, transparent 2.8px),
+    linear-gradient(180deg, var(--plate-hi), var(--plate) 120px);
+  clip-path: inherit;
+}
+.plate::after { /* neon strip on top edge, like the HUD */
+  content: "";
+  position: absolute;
+  top: 0; left: 30%; right: 30%;
+  height: 2px;
+  background: var(--cyan);
+  box-shadow: 0 0 10px var(--cyan);
+}
+
+/* ---------- hero ---------- */
+.hero {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--steel);
+}
+.hero img.bg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: 50% 40%;
+  filter: saturate(.8) brightness(.55);
+}
+.hero::before {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, rgba(10,15,19,.2), var(--field) 96%);
+  z-index: 1;
+}
+.hero .wrap { position: relative; z-index: 2; padding-block: clamp(56px, 12vw, 128px) 36px; }
+.eyebrow {
+  font: 600 12px/1.3 var(--font-mono);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+h1 {
+  font: 800 clamp(40px, 8vw, 84px)/0.95 var(--font-display);
+  letter-spacing: -.01em;
+  margin: 14px 0 16px;
+  text-transform: uppercase;
+  text-wrap: balance;
+  text-shadow: 0 0 24px rgba(79,214,255,.25);
+}
+.lede { max-width: 60ch; font-size: clamp(16px, 2.2vw, 19px); color: var(--ink); margin: 0; }
+.readout {
+  margin-top: 26px;
+  display: flex; flex-wrap: wrap; gap: 8px 22px;
+  font: 13px/1.4 var(--font-mono);
+  color: var(--ink-dim);
+}
+.readout b { color: var(--ink); font-weight: 600; }
+
+/* ---------- nav ---------- */
+nav.tabs {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: rgba(10,15,19,.92);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--steel);
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--field); }
+nav.tabs .wrap { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+nav.tabs a {
+  flex: none;
+  padding: 14px 14px 12px;
+  font: 600 14px/1 var(--font-display);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+}
+nav.tabs a:hover { color: var(--ink); border-bottom-color: var(--cyan-deep); }
+
+section { padding-block: 56px 8px; scroll-margin-top: 52px; }
+h2 {
+  font: 700 clamp(26px, 4vw, 36px)/1.1 var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  margin: 8px 0 12px;
+  text-wrap: balance;
+}
+.sec-note { max-width: 66ch; color: var(--ink-dim); margin: 0 0 28px; }
+
+/* ---------- chips ---------- */
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font: 600 11px/1 var(--font-mono);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 6px 8px 5px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+}
+.chip::before { content: ""; width: 6px; height: 6px; background: currentColor; box-shadow: 0 0 6px currentColor; }
+.st-done { color: var(--cyan); }
+.st-play { color: var(--amber); }
+.st-work { color: var(--acid); }
+.st-idea { color: var(--ink-dim); }
+.st-talk { color: var(--red); }
+.kind { color: var(--ink-dim); border-color: var(--steel); }
+.kind::before { display: none; }
+
+/* ---------- missions ---------- */
+.missions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.mission .in { display: flex; flex-direction: column; }
+.mission .shot { position: relative; aspect-ratio: 16 / 8; overflow: hidden; background: #070a0d; }
+.mission .shot img { width: 100%; height: 100%; object-fit: cover; }
+.mission .shot.blank {
+  display: grid; place-items: center;
+  background:
+    repeating-linear-gradient(45deg, rgba(79,214,255,.05) 0 10px, transparent 10px 20px),
+    #0b1115;
+  color: var(--ink-dim);
+  font: 600 13px/1.4 var(--font-mono);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 16px;
+}
+.mission .num {
+  position: absolute; left: 14px; bottom: 10px;
+  font: 800 52px/1 var(--font-display);
+  color: var(--ink);
+  text-shadow: 0 2px 14px rgba(0,0,0,.9);
+}
+.mission .body { padding: 16px 20px 22px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.mission .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.mission h3 { font: 700 23px/1.15 var(--font-display); margin: 2px 0 0; }
+.mission p { margin: 0; color: var(--ink); }
+.left-title {
+  font: 600 11px/1 var(--font-mono);
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-top: 4px;
+}
+ul.left { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+ul.left li { position: relative; padding-left: 18px; color: var(--ink); }
+ul.left li::before { content: ""; position: absolute; left: 2px; top: .62em; width: 7px; height: 7px; border: 1px solid var(--cyan); transform: rotate(45deg); }
+.mission.wide { grid-column: 1 / -1; }
+.mission.wide .in { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); }
+.mission.wide .shot { aspect-ratio: auto; min-height: 100%; }
+
+/* ---------- Overwatch / proposal box ---------- */
+.comms {
+  border-left: 3px solid var(--acid);
+  background: rgba(201,225,75,.06);
+  padding: 12px 14px;
+  font-size: 15px;
+}
+.comms .who { font: 600 12px/1 var(--font-mono); color: var(--acid); letter-spacing: .08em; display: block; margin-bottom: 6px; }
+
+/* ---------- log ---------- */
+.log { display: grid; gap: 0; position: relative; }
+.entry { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 22px; padding: 22px 0; border-top: 1px dashed var(--steel); }
+.entry:first-child { border-top: 0; }
+.entry time {
+  font: 600 14px/1.3 var(--font-mono);
+  color: var(--cyan);
+  font-variant-numeric: tabular-nums;
+}
+.entry time span { display: block; color: var(--ink-dim); font-weight: 400; font-size: 12px; margin-top: 4px; }
+.entry h3 { font: 700 20px/1.2 var(--font-display); margin: 0 0 8px; text-wrap: balance; }
+.entry .txt { min-width: 0; }
+.entry ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; }
+.entry li::marker { color: var(--cyan-deep); }
+.entry figure { margin: 14px 0 0; max-width: 640px; }
+.entry figure img { border: 1px solid var(--steel); }
+.entry figcaption { font: 12px/1.4 var(--font-mono); color: var(--ink-dim); margin-top: 6px; }
+.pilot { color: var(--amber); font-weight: 600; }
+.ai { font-family: var(--font-mono); color: var(--cyan); font-size: .92em; }
+
+/* ---------- codex queue ---------- */
+.queue { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.q .in { padding: 18px 20px 20px; display: grid; gap: 8px; align-content: start; }
+.q .code { font: 700 30px/1 var(--font-mono); color: var(--ink); }
+.q h3 { font: 600 17px/1.25 var(--font-display); margin: 0; }
+.q p { margin: 0; color: var(--ink-dim); font-size: 15px; }
+
+/* ---------- next ---------- */
+.next { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 40px; counter-reset: n; margin: 0; padding: 0; list-style: none; }
+.next li { counter-increment: n; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+.next li::before { content: counter(n, decimal-leading-zero); font: 600 13px/1 var(--font-mono); color: var(--cyan); }
+.next b { font-weight: 600; }
+
+footer { padding-block: 56px 40px; color: var(--ink-dim); font: 12px/1.6 var(--font-mono); }
+footer .wrap { border-top: 1px solid var(--steel); padding-top: 18px; }
+
+@media (max-width: 860px) {
+  .missions, .queue, .next { grid-template-columns: minmax(0, 1fr); }
+  .mission.wide .in { display: flex; flex-direction: column; }
+  .mission.wide .shot { aspect-ratio: 16 / 9; }
+}
+@media (max-width: 560px) {
+  .entry { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .entry time span { display: inline; margin: 0 0 0 8px; }
+  .mission .num { font-size: 40px; }
+  :root { --cut: 10px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .plate::after { animation: pulse 3.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .45; } }
+}
+
+/* ---------- zoom ---------- */
+[hidden] { display: none !important; }
+.shot img, .entry figure img { cursor: zoom-in; }
+.zoom {
+  position: fixed; inset: 0; z-index: 20;
+  display: grid; place-items: center;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  background: rgba(5,8,10,.94);
+  cursor: zoom-out;
+}
+.zoom img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; border: 1px solid var(--steel); box-shadow: 0 0 40px rgba(79,214,255,.15); }
+.zoom button {
+  position: absolute; top: max(12px, env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px));
+  font: 600 13px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink); background: var(--plate); border: 1px solid var(--steel); padding: 10px 12px; cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+
+<header class="hero">
+  <img class="bg" src="img/hero.jpg" alt="">
+  <div class="wrap">
+    <div class="eyebrow">Iron Rain · бортовой журнал разработки</div>
+    <h1>After Paradise</h1>
+    <p class="lede">Пошаговая тактика про отряд мехов на Земле после «рая». Альены пришли с исцелением, а оставили мутантов. Здесь видно, что уже работает в игре, какие миссии готовы и что делаем дальше.</p>
+    <div class="readout">
+      <span>Демо: <b>0.3</b></span>
+      <span>Планета: <b>Terra</b></span>
+      <span>Миссий готово: <b>4 из 7</b> + обучение</span>
+      <span>Запись от <b>20.10.2026</b></span>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Разделы">
+  <div class="wrap">
+    <a href="#campaign">Кампания</a>
+    <a href="#log">Журнал</a>
+    <a href="#next">Дальше</a>
+  </div>
+</nav>
+
+<main>
+<section id="campaign">
+  <div class="wrap">
+    <div class="eyebrow">Кампания · Terra</div>
+    <h2>Семь миссий первой планеты</h2>
+    <p class="sec-note">На каждой планете семь миссий, седьмая — босс. Сюжетные миссии чередуются с простыми боями: простой бой даёт передышку, опыт пилотам и вещи из подов, но у него всегда есть своя маленькая цель. Перед кампанией идут «Учения».</p>
+
+    <div class="missions">
+
+      <article class="plate mission">
+        <div class="in">
+          <div class="shot"><img src="img/drill.jpg" alt="Финал «Учений»: надпись «Учения пройдены»"><span class="num">00</span></div>
+          <div class="body">
+            <div class="chips"><span class="chip kind">Обучение</span><span class="chip st-done">Готово</span></div>
+            <h3>Учения</h3>
+            <p>Короткий бой с подсказками: ИИ отряда объясняет по шагу, пилот шутит. Запускается при первом входе, его можно пропустить и пройти снова из настроек.</p>
+            <p>Сыграли четыре человека, баланс одобрили.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="plate mission">
+        <div class="in">
+          <div class="shot"><img src="img/clear.jpg" alt="Бой: Lancer бьёт веером по мутантам"><span class="num">01</span></div>
+          <div class="body">
+            <div class="chips"><span class="chip kind">Простой бой</span><span class="chip st-done">Готово</span></div>
+            <h3>Зачистка</h3>
+            <p>Высадка с Iron Rain на случайную карту и бой до последнего мутанта: вепри, Spitter, Knuckleback и Shiva.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="plate mission wide">
+        <div class="in">
+          <div class="shot"><img src="img/ampoule.jpg" alt="«Ампула»: Iron Rain над зоной эвакуации, два Spitter и два Knuckleback обстреливают корабль"><span class="num">02</span></div>
+          <div class="body">
+            <div class="chips"><span class="chip kind">Сюжет</span><span class="chip st-play">Играбельна · ждёт прогона</span></div>
+            <h3>Ампула</h3>
+            <p>В больнице на болоте лежит вакцина, сделанная ещё до прихода альенов. По узкому мостику пройдёт только лёгкий Wraith. Как только ампула выходит на мостик, мутанты чуют её и идут волнами: 3, 4, 5 вепрей. Дальше надо дотащить ампулу к зоне эвакуации и дождаться Iron Rain. За ход до его прилёта справа снизу выходят два Spitter и два Knuckleback и начинают обстреливать корабль, пока отряд подтягивается к нему.</p>
+            <div class="comms"><span class="who">OVERWATCH · СПУТНИК</span>Тревога! Мутанты идут на сигнал ампулы. Всем к зоне эвакуации!</div>
+            <div class="left-title">Осталось</div>
+            <ul class="left">
+              <li>Автор проходит миссию сам и присылает правки.</li>
+              <li>Тестеры пишут, что враги бьют своих. Огонь по своим в игре задуман, но ИИ не должен делать это нарочно: разобрать по отчётам.</li>
+              <li>Плашка задания, которая уезжает под кнопку «Задание».</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+      <article class="plate mission">
+        <div class="in">
+          <div class="shot"><img src="img/lure.jpg" alt="«Приманка»: Velvet среди мутантов"><span class="num">03</span></div>
+          <div class="body">
+            <div class="chips"><span class="chip kind">Простой бой</span><span class="chip st-play">Готово · ждёт прогона</span></div>
+            <h3>Приманка</h3>
+            <p>Overwatch ловит «сигнал выжившей», а на месте Velvet: зовёт к себе, а рядом с ней лопается облако кислотной пыли. Здесь игрок знакомится с ней в спокойном бою.</p>
+            <p>Побочная цель: Velvet никого не заманила. За неё пилоты получают опыт ещё раз.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="plate mission">
+        <div class="in">
+          <div class="shot"><img src="img/artillery.jpg" alt="«Артиллерия»: база за забором с колючей проволокой, остовы машин, орудие во дворе"><span class="num">04</span></div>
+          <div class="body">
+            <div class="chips"><span class="chip kind">Сюжет</span><span class="chip st-play">Готово · ждёт прогона</span></div>
+            <h3>Артиллерия</h3>
+            <p>Заброшенная база за колючей проволокой, во дворе старое орудие. Мех запускает его, и мутанты всей толпой идут его ломать. Надо продержаться пять ходов. В одном из подов лежит джетпак, с ним Wraith или Lancer перелетает забор.</p>
+            <div class="left-title">Уровни сложности</div>
+            <ul class="left">
+              <li>«Морось»: целое орудие, волны по 4, 4 и 5 вепрей.</li>
+              <li>«Ливень»: орудие побито, волны по 5, 5 и 6.</li>
+              <li>«Железный дождь»: вместо орудия ракетная установка, волны по 6, 6 и 8.</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+      <article class="plate mission">
+        <div class="in">
+          <div class="shot blank"><span>05 · вышка связи · 4 хода</span></div>
+          <div class="body">
+            <div class="chips"><span class="chip kind">Простой бой</span><span class="chip st-done">Решено</span></div>
+            <h3>Пятая миссия</h3>
+            <p>Передышка перед сюжетной шестой. Бой проще, но со своим условием: уложиться в четыре хода и не дать мутантам сломать вышку связи.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="plate mission">
+        <div class="in">
+          <div class="shot blank"><span>06 · кабину рисуем детально</span></div>
+          <div class="body">
+            <div class="chips"><span class="chip kind">Сюжет</span><span class="chip st-idea">Замысел готов</span></div>
+            <h3>Спасти капитана</h3>
+            <p>Камера показывает сбитый старый истребитель в болоте. Сквозь прозрачный фонарь кабины виден живой человек: капитан ВВС Terra Billy Big Bogs, один из последних бойцов сопротивления. Мутанты уже идут к нему.</p>
+            <p>Задача: пробиться к самолёту, отбить волны и под прикрытием довести капитана до эвакуации. В награду он отдаёт своё личное оружие: бьёт слабо, зато патроны не кончаются.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="plate mission wide">
+        <div class="in">
+          <div class="shot"><img src="img/bellows.gif" alt="Bellows: парящая мутантка с тремя мешками-соплами и туфлей на одной ноге"><span class="num">07</span></div>
+          <div class="body">
+            <div class="chips"><span class="chip kind">Босс</span><span class="chip st-done">Правила решены</span></div>
+            <h3>Bellows</h3>
+            <p>Мутантка с раздутой грудью, крыльями из рук и тремя мешками-соплами на животе. На одной ноге у неё женская туфелька. Она пришла за мирными жителями.</p>
+            <p>Задача: спасти как можно больше людей и убить Bellows. Кислота из её сопел разъедает броню каждый ход, поэтому в подах лежат медпаки.</p>
+            <p>Её перерисуют: она станет женственнее, но останется жуткой. Рёбра наружу, туфелька на одной ноге, а на плечах обрывки формы: возможно, раньше она руководила аэродромом.</p>
+            <div class="left-title">Решено</div>
+            <ul class="left">
+              <li>Bellows подлетает к дому и на следующий ход вдыхает всех жителей через сопла, леча себя за каждого. Сорвать — оттолкнуть её от дома.</li>
+              <li>Или мех рядом с домом выводит людей, и они бегут к Iron Rain.</li>
+              <li>За каждых двух спасённых отряд получает кредит лаборатории.</li>
+              <li>В каждом из трёх подов медпак: снимает кислоту, а на лёгкой сложности ещё и лечит.</li>
+              <li>Кислотное облако 3×3 видно за ход до залпа. Облако и охота на дом чередуются.</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<section id="log">
+  <div class="wrap">
+    <div class="eyebrow">Журнал работ</div>
+    <h2>Что сделано и когда</h2>
+    <p class="sec-note">Новые записи сверху. Игру делают трое: автор придумывает и пишет музыку, Codex рисует, Claude пишет код.</p>
+
+    <div class="log">
+
+      <div class="entry">
+        <time>20.10<span>понедельник</span></time>
+        <div class="txt">
+          <h3>«Спасти капитана», новая Bellows, понятный рюкзак</h3>
+          <ul>
+            <li>Автор написал сюжет шестой миссии: сбитый истребитель в болоте, живой капитан в кабине, спасение под огнём и эвакуация.</li>
+            <li>Кабину с капитаном нарисуем детально: прозрачный фонарь, а за стеклом хорошо виден капитан.</li>
+            <li>Для актёров озвучки готовы черновики реплик капитана, Overwatch и Hana.</li>
+            <li>Bellows получила новый образ: седая командир военного аэродрома с гарнитурой на шее. Codex рисует её кадры для боя.</li>
+            <li>По отчёту тестера рюкзак стал понятнее: если вещь не подходит меху, на кнопке горит красный знак «запрещено», а по клику он пульсирует и игра пишет причину.</li>
+            <li>Codex получил задания на арт «до и после» Bellows для постов и на рисованную иконку рюкзака.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>19.10<span>воскресенье</span></time>
+        <div class="txt">
+          <h3>Порядок кампании и этот журнал</h3>
+          <ul>
+            <li>Расклад Terra уточнён: пятая миссия — простой бой, шестая — сюжетная, седьмая — босс Bellows.</li>
+            <li>«Артиллерия» в красках: база, забор с колючкой, ворота, остовы машин, орудие и ракетная установка, джетпак на спине у Wraith и Lancer с пламенем из сопел.</li>
+            <li>«Ампула»: к прилёту Iron Rain корабль обстреливают уже два Spitter и два Knuckleback.</li>
+            <li>Пятая миссия: простой бой на время у вышки связи.</li>
+            <li>Bellows — босс Terra. Codex получил задание на её новый образ.</li>
+            <li>Седьмая миссия: Bellows охотится на жителей, спасённые приносят кредиты отряду.</li>
+            <li>Появился этот журнал.</li>
+            <li>Уровни сложности назвали по дождю: «Морось», «Ливень», «Железный дождь».</li>
+            <li>Мутанты стали внимательнее: бьют меха, который встал на пути, а мех на точке респауна получает урон.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>18.10<span>суббота</span></time>
+        <div class="txt">
+          <h3>«Приманка», «Артиллерия», джетпак, демо 0.3</h3>
+          <ul>
+            <li>Игра называется <b>After Paradise</b>. Английский язык теперь основной, русский включается в настройках.</li>
+            <li>«Артиллерия» играется от начала до конца: забор ломается за два попадания, орудие ходит и стреляет навесом, мутанты идут на него волнами.</li>
+            <li>Джетпак: мех летит по прямой над чем угодно, клетка за очко действия. Bastion слишком тяжёлый.</li>
+            <li>«Приманка» с побочной целью; Velvet ушла из первой миссии, теперь игрок встречает её здесь.</li>
+            <li>Мехи на рисунках получили точки крепления: спина, плечи, пояс. Любое новое снаряжение рисуется один раз и надевается на любого меха.</li>
+            <li>Демо 0.3 ушло тестерам.</li>
+          </ul>
+          <figure><img src="img/jetpack.jpg" alt="Wraith с джетпаком: голубые клетки полёта через забор" loading="lazy"><figcaption>Куда Wraith долетит с джетпаком, пока на временных блоках</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>17.10<span>пятница</span></time>
+        <div class="txt">
+          <h3>Velvet целиком</h3>
+          <ul>
+            <li>Зов притягивает меха к Velvet. Если мех закончил ход рядом с ней, она лопается облаком кислотной пыли, и на земле остаются лужи кислоты.</li>
+            <li>Отряд реагирует на неё короткими сценками в журнале боя.</li>
+            <li>Корабль Iron Rain перерисован: старый, обгоревший, с подпалинами от попаданий.</li>
+          </ul>
+          <figure><img src="img/velvet.jpg" alt="Velvet зовёт меха к себе" loading="lazy"><figcaption>Зов Velvet: стрелка показывает, куда потянет меха</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>16.10<span>четверг</span></time>
+        <div class="txt">
+          <h3>«Ампула» и опыт пилотов</h3>
+          <ul>
+            <li>«Ампула» играется целиком: болото, мостик, больница, тревога, волны вепрей, эвакуация.</li>
+            <li>Пилоты получают опыт за победы и выбирают навыки. У каждого есть врождённая черта.</li>
+            <li>Поды с вещами падают с орбиты, их можно разбить выстрелом.</li>
+            <li>Перемотка хода: одну ошибку за бой можно отыграть.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>15.10<span>среда</span></time>
+        <div class="txt">
+          <h3>Живые пилоты и связь</h3>
+          <ul>
+            <li>В карточке меха кабина с пилотом: <span class="pilot">Walt Kessler</span>, <span class="pilot">Mireille Dufaut</span>, <span class="pilot">John Abroak</span> моргают, морщатся, кричат под обстрелом. Картинка шумит, как боевой видеосигнал.</li>
+            <li>Окно связи с <span class="pilot">Hana Ferreira</span>, пилотом Iron Rain.</li>
+          </ul>
+          <figure><img src="img/hana.jpg" alt="Окно связи: Hana Ferreira, корабль под обстрелом" loading="lazy"><figcaption>Hana на связи, по кораблю стучат</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>14.10<span>вторник</span></time>
+        <div class="txt">
+          <h3>Высадка Iron Rain и «Учения»</h3>
+          <ul>
+            <li>Игрок расставляет отряд, корабль заходит на посадку и опускает мехов из-под брюха: пыль, дым, огонь сопел.</li>
+            <li>Обломки своих мехов остаются на поле и тонут, если их столкнуть в воду.</li>
+            <li>«Учения»: ИИ <span class="ai">VX-3A7F-09</span> ведёт игрока по шагам.</li>
+            <li>Семь нарисованных фонов Земли.</li>
+          </ul>
+          <figure><img src="img/ironrain.jpg" alt="Iron Rain заходит на посадку над полем" loading="lazy"><figcaption>Iron Rain заходит на посадку</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>10–12.10</time>
+        <div class="txt">
+          <h3>Рисованный мир и интерфейс «Броня»</h3>
+          <ul>
+            <li>3D-модели сменились рисованными спрайтами: мехи и мутанты нарисованы под один ракурс камеры.</li>
+            <li>Интерфейс как пульт меха: клёпаные рамки, неон, радар и осциллограф в простое.</li>
+            <li>Приближение поля и камера, которая следит за тем, кто ходит.</li>
+            <li>Мехи могут стоять в воде по пояс; мутанты в воде тонут.</li>
+          </ul>
+          <figure><img src="img/cockpit.jpg" alt="Пилоты в кабинах с разным настроением" loading="lazy"><figcaption>Настроения пилотов в кабине</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>3–4.10</time>
+        <div class="txt">
+          <h3>Первый бой на кубиках</h3>
+          <ul>
+            <li>Поле 8×8, три меха: Bastion, Wraith, Lancer. Враги заранее объявляют удары, игрок успевает их сорвать.</li>
+            <li>Отброс, столкновения, невидимость Wraith, огонь по своим (задуман).</li>
+            <li>Журнал боя пишется живым языком, в духе Fallout.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<section id="next">
+  <div class="wrap">
+    <div class="eyebrow">Дальше</div>
+    <h2>Ближайшие шаги</h2>
+    <ol class="next">
+      <li><span><b>«Артиллерия»</b>: прогон автора и правки по числам.</span></li>
+      <li><span><b>«Ампула»</b>: правки после прогона автора и разбор «враги бьют своих».</span></li>
+      <li><span><b>Босс Bellows</b>: правила решены, ждём эскизы Codex (024, 025) и собираем миссию.</span></li>
+      <li><span><b>Шестая миссия</b>: договориться, как капитан выбирается из кабины и идёт к эвакуации, и дать Codex задание на самолёт и капитана.</span></li>
+      <li><span><b>Пятая миссия</b>: собрать карту с вышкой связи и отсчётом ходов.</span></li>
+      <li><span><b>ИИ врагов</b>: задние стрелки простаивают, чинить вместе с балансом.</span></li>
+      <li><span><b>Голос</b>: новая пачка реплик для актёров озвучки.</span></li>
+    </ol>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">After Paradise · Godot 4 · Terra, сектор высадки. Журнал обновляется после каждого рабочего дня.</div>
+</footer>
+
+<div class="zoom" id="zoom" hidden role="dialog" aria-modal="true" aria-label="Картинка крупно">
+  <button type="button" id="zoom-close">Закрыть</button>
+  <img id="zoom-img" alt="">
+</div>
+<script>
+(function () {
+  var box = document.getElementById('zoom');
+  var big = document.getElementById('zoom-img');
+  function close() { box.hidden = true; big.removeAttribute('src'); }
+  document.querySelectorAll('.shot img, .entry figure img').forEach(function (img) {
+    img.tabIndex = 0;
+    function open() { big.src = img.currentSrc || img.src; big.alt = img.alt; box.hidden = false; document.getElementById('zoom-close').focus(); }
+    img.addEventListener('click', open);
+    img.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+  });
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !box.hidden) close(); });
+})();
+</script>
+
+</body>
+</html>
