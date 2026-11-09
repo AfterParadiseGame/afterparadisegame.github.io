@@ -352,6 +352,7 @@ footer .wrap { border-top: 1px solid var(--steel); padding-top: 18px; }
     <a href="#voices">Голоса</a>
     <a href="#bestiary">Кухня художника</a>
     <a href="#next">Дальше</a>
+    <a href="#contact">Связь</a>
   </div>
 </nav>
 
@@ -739,6 +740,92 @@ footer .wrap { border-top: 1px solid var(--steel); padding-top: 18px; }
     </ol>
   </div>
 </section>
+<!-- Contact form for the public journal only (tools/build_public_journal.py inserts it
+     before </main> when WEB3FORMS_KEY is set). Web3Forms forwards the message to the
+     author's mail; the address is never on the page. The access key is public by design. -->
+<style>
+.contact .in { padding: 22px 22px 24px; display: grid; gap: 14px; }
+.contact form { display: grid; gap: 12px; max-width: 640px; }
+.contact label { display: grid; gap: 6px; font: 600 12px/1 var(--font-mono); color: var(--ink-dim); letter-spacing: .08em; text-transform: uppercase; }
+.contact input, .contact select, .contact textarea {
+  font: 16px/1.4 var(--font-body); color: var(--ink);
+  background: var(--field); border: 1px solid var(--steel); padding: 10px 12px; width: 100%;
+}
+.contact textarea { min-height: 140px; resize: vertical; }
+.contact input:focus, .contact select:focus, .contact textarea:focus { outline: 2px solid var(--cyan); outline-offset: 0; border-color: var(--cyan); }
+.contact .bot { position: absolute; left: -9999px; }
+.contact button {
+  justify-self: start; font: 700 14px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--field); background: var(--cyan); border: 0; padding: 14px 22px; cursor: pointer;
+}
+.contact button[disabled] { opacity: .6; cursor: default; }
+.contact .status { margin: 0; min-height: 1.4em; }
+.contact .status.ok { color: var(--acid); }
+.contact .status.err { color: var(--red); }
+</style>
+<section id="contact">
+  <div class="wrap">
+    <div class="eyebrow">Связь</div>
+    <h2>Предложения о сотрудничестве</h2>
+    <p class="sec-note">Издатели, стримеры, журналисты, художники, музыканты — всем, кому интересна игра, напишите нам. Сообщение придёт автору, ответим на почту, которую вы укажете.</p>
+    <article class="plate contact"><div class="in">
+      <form id="contact-form" action="https://api.web3forms.com/submit" method="POST">
+        <input type="hidden" name="access_key" value="94351dea-fddf-4dbc-bd83-68398df3226e">
+        <input type="hidden" name="subject" value="After Paradise: предложение с сайта журнала">
+        <input type="hidden" name="from_name" value="After Paradise — журнал">
+        <input type="checkbox" name="botcheck" class="bot" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <label>Как к вам обращаться
+          <input type="text" name="name" required autocomplete="name">
+        </label>
+        <label>Почта для ответа
+          <input type="email" name="email" required autocomplete="email">
+        </label>
+        <label>О чём
+          <select name="topic">
+            <option>Издание и продвижение</option>
+            <option>Стрим или обзор</option>
+            <option>Пресса</option>
+            <option>Графика, музыка, озвучка</option>
+            <option>Другое</option>
+          </select>
+        </label>
+        <label>Сообщение
+          <textarea name="message" required></textarea>
+        </label>
+        <button type="submit">Отправить</button>
+        <p class="status" id="contact-status" role="status"></p>
+      </form>
+      <div class="comms"><span class="who">OVERWATCH · В ЭФИРЕ</span>Канал открыт. Пишите по делу — мутантам не отвечаем.</div>
+    </div></article>
+  </div>
+</section>
+<script>
+(function () {
+  var form = document.getElementById('contact-form');
+  var status = document.getElementById('contact-status');
+  var button = form.querySelector('button');
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    button.disabled = true;
+    status.className = 'status';
+    status.textContent = 'Отправляем…';
+    fetch(form.action, { method: 'POST', headers: { 'Accept': 'application/json' }, body: new FormData(form) })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.success) throw new Error(data.message || 'fail');
+        form.reset();
+        status.className = 'status ok';
+        status.textContent = 'Сообщение ушло. Спасибо! Ответим на указанную почту.';
+      })
+      .catch(function () {
+        status.className = 'status err';
+        status.textContent = 'Не получилось отправить. Проверьте связь и попробуйте ещё раз.';
+      })
+      .finally(function () { button.disabled = false; });
+  });
+})();
+</script>
+
 </main>
 
 <footer>
