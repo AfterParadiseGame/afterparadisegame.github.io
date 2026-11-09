@@ -337,7 +337,7 @@ footer .wrap { border-top: 1px solid var(--steel); padding-top: 18px; }
     <h1>After Paradise</h1>
     <p class="lede">Пошаговая тактика про отряд мехов на Земле после «рая». Альены пришли с исцелением, а оставили мутантов. Здесь видно, что уже работает в игре, какие миссии готовы и что делаем дальше.</p>
     <div class="readout">
-      <span>Демо: <b>0.5</b></span>
+      <span>Демо: <b>0.6</b></span>
       <span>Планета: <b>Terra</b></span>
       <span>Миссий готово: <b>4 из 7</b> + обучение</span>
       <span>Запись от <b>09.11.2026</b></span>
@@ -760,6 +760,8 @@ footer .wrap { border-top: 1px solid var(--steel); padding-top: 18px; }
 }
 .contact button[disabled] { opacity: .6; cursor: default; }
 .contact .status { margin: 0; min-height: 1.4em; }
+.contact-bug { margin: -6px 0 18px; font: 14px/1.5 var(--font-mono); color: var(--ink-dim); max-width: 62ch; }
+.contact-bug b { color: var(--amber); font-weight: 600; }
 .contact .status.ok { color: var(--acid); }
 .contact .status.err { color: var(--red); }
 </style>
@@ -768,10 +770,11 @@ footer .wrap { border-top: 1px solid var(--steel); padding-top: 18px; }
     <div class="eyebrow">Связь</div>
     <h2>Предложения о сотрудничестве</h2>
     <p class="sec-note">Издатели, стримеры, журналисты, художники, музыканты — всем, кому интересна игра, напишите нам. Сообщение придёт автору, ответим на почту, которую вы укажете.</p>
+    <p class="contact-bug" id="bug">Играете в демо и что-то пошло не так? Выберите <b>«Ошибка в игре»</b> и расскажите: версия, миссия, раунд, что делали и что случилось. Скриншот — ссылкой на облако или вложением в ответ на наше письмо.</p>
     <article class="plate contact"><div class="in">
       <form id="contact-form" action="https://api.web3forms.com/submit" method="POST">
         <input type="hidden" name="access_key" value="94351dea-fddf-4dbc-bd83-68398df3226e">
-        <input type="hidden" name="subject" value="After Paradise: предложение с сайта журнала">
+        <input type="hidden" name="subject" id="contact-subject" value="After Paradise: предложение с сайта журнала">
         <input type="hidden" name="from_name" value="After Paradise — журнал">
         <input type="checkbox" name="botcheck" class="bot" tabindex="-1" autocomplete="off" aria-hidden="true">
         <label>Как к вам обращаться
@@ -781,16 +784,17 @@ footer .wrap { border-top: 1px solid var(--steel); padding-top: 18px; }
           <input type="email" name="email" required autocomplete="email">
         </label>
         <label>О чём
-          <select name="topic">
+          <select name="topic" id="contact-topic">
             <option>Издание и продвижение</option>
             <option>Стрим или обзор</option>
             <option>Пресса</option>
             <option>Графика, музыка, озвучка</option>
+            <option value="bug">Ошибка в игре (bug report)</option>
             <option>Другое</option>
           </select>
         </label>
         <label>Сообщение
-          <textarea name="message" required></textarea>
+          <textarea name="message" id="contact-message" required></textarea>
         </label>
         <button type="submit">Отправить</button>
         <p class="status" id="contact-status" role="status"></p>
@@ -804,6 +808,18 @@ footer .wrap { border-top: 1px solid var(--steel); padding-top: 18px; }
   var form = document.getElementById('contact-form');
   var status = document.getElementById('contact-status');
   var button = form.querySelector('button');
+  // A bug report gets its own subject (easy to filter in the mail) and a hint what to tell.
+  var topic = document.getElementById('contact-topic');
+  var subject = document.getElementById('contact-subject');
+  var message = document.getElementById('contact-message');
+  function onTopic() {
+    var bug = topic.value === 'bug';
+    subject.value = bug ? 'After Paradise: ошибка в игре' : 'After Paradise: предложение с сайта журнала';
+    message.placeholder = bug ? 'Версия демо, миссия и раунд, что делали и что пошло не так' : '';
+  }
+  topic.addEventListener('change', onTopic);
+  // A link to #bug opens the form ready for a bug report.
+  if (location.hash === '#bug') { topic.value = 'bug'; onTopic(); }
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     button.disabled = true;
