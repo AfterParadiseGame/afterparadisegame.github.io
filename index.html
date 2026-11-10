@@ -325,6 +325,12 @@ footer .wrap { border-top: 1px solid var(--steel); padding-top: 18px; }
   font: 600 13px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase;
   color: var(--ink); background: var(--plate); border: 1px solid var(--steel); padding: 10px 12px; cursor: pointer;
 }
+.intro-video {
+  display: block; width: 100%; height: auto; aspect-ratio: 16 / 9;
+  background: #000; border: 1px solid var(--steel);
+  box-shadow: 0 0 40px rgba(79,214,255,.12);
+}
+.intro-cap { margin-top: 10px; color: var(--muted, #8a979e); font-size: 14px; }
 </style>
 </head>
 <body>
@@ -340,13 +346,14 @@ footer .wrap { border-top: 1px solid var(--steel); padding-top: 18px; }
       <span>Демо: <b>0.6</b></span>
       <span>Планета: <b>Terra</b></span>
       <span>Миссий готово: <b>4 из 7</b> + обучение</span>
-      <span>Запись от <b>09.11.2026</b></span>
+      <span>Запись от <b>10.11.2026</b></span>
     </div>
   </div>
 </header>
 
 <nav class="tabs" aria-label="Разделы">
   <div class="wrap">
+    <a href="#intro">Интро</a>
     <a href="#campaign">Кампания</a>
     <a href="#log">Журнал</a>
     <a href="#voices">Голоса</a>
@@ -357,6 +364,18 @@ footer .wrap { border-top: 1px solid var(--steel); padding-top: 18px; }
 </nav>
 
 <main>
+<section id="intro">
+  <div class="wrap">
+    <div class="eyebrow">Интро</div>
+    <h2>Как всё начиналось: интро перед первой миссией</h2>
+    <p class="sec-note">Игра открывается чёрно-белой рисованной историей о том, как пришёл «рай» и чем он кончился. Рассказывает Виктор — учёный, который когда-то открыл пришельцам дверь. Камера плывёт по рисованным страницам, подписи появляются по мере чтения, а единственный цвет — розовый: так в мире игры выглядят пришельцы. Музыку написал автор игры. Голос Виктора запишут актёры дубляжа, пока подписи можно только читать.</p>
+    <video class="intro-video" controls preload="metadata" playsinline poster="img/intro/intro_poster.jpg">
+      <source src="img/intro/intro_ru.mp4" type="video/mp4">
+    </video>
+    <p class="intro-cap">Альфа-версия: без голоса и звуков, только музыка. Около трёх минут.</p>
+  </div>
+</section>
+
 <section id="campaign">
   <div class="wrap">
     <div class="eyebrow">Кампания · Terra</div>
@@ -489,6 +508,21 @@ footer .wrap { border-top: 1px solid var(--steel); padding-top: 18px; }
     <p class="sec-note">Новые записи сверху. Игру делают трое. Автор придумал её целиком: мир и его историю, правила боя, миссии, мутантов и пилотов. Он же пишет музыку и звуки и проходит каждую сборку. Codex рисует, Claude пишет код. Голоса отряду дадут профессиональные актёры дубляжа. Графика создана с помощью ИИ: Codex рисует по описаниям и наброскам автора, каждый образ проходит эскизы и выбор автора.</p>
 
     <div class="log">
+
+      <div class="entry">
+        <time>10.11<span>вторник</span></time>
+        <div class="txt">
+          <h3>Интро с музыкой автора</h3>
+          <ul>
+            <li>Собрали интро целиком: двенадцать рисованных слайдов на шести страницах. Камера сама плывёт по кадрам, подписи появляются по мере чтения, страницы перелистываются сами. Клик торопит, «Пропустить» сразу ведёт в «Учения».</li>
+            <li>Подписи написаны от руки на бумажных полосках, чуть наискосок, как вклеенные. Каждая фраза — с новой строки.</li>
+            <li>Розовое свечение пришельцев переливается в сиреневый, как перламутр. Остальной рисунок — карандаш.</li>
+            <li>Codex дочистил рисунки: убрал узор генератора с лиц, а на слайде с больницей перерисовал врача и медсестру — теперь они радуются чистым анализам.</li>
+            <li>Музыка — трек автора. Тайминг подогнали под неё: трек разворачивается в полную силу ровно на празднике «Мы назвали это раем».</li>
+            <li>Видео интро — в новом разделе «Интро» в начале журнала.</li>
+          </ul>
+        </div>
+      </div>
 
       <div class="entry">
         <time>09.11<span>понедельник</span></time>
