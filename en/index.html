@@ -1,0 +1,940 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="A turn-based tactics game about a squad of mechs on Earth after “paradise”. Development logbook: what already works, which missions are ready.">
+<link rel="canonical" href="https://afterparadisegame.github.io/en/">
+<link rel="alternate" hreflang="ru" href="https://afterparadisegame.github.io/">
+<link rel="alternate" hreflang="en" href="https://afterparadisegame.github.io/en/">
+<link rel="alternate" hreflang="x-default" href="https://afterparadisegame.github.io/en/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="en_US">
+<meta property="og:title" content="After Paradise — development logbook">
+<meta property="og:description" content="A turn-based tactics game about a squad of mechs on Earth after “paradise”. Development logbook: what already works, which missions are ready.">
+<meta property="og:url" content="https://afterparadisegame.github.io/en/">
+<meta property="og:image" content="https://afterparadisegame.github.io/img/og_cover.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<script data-goatcounter="https://afterparadise.goatcounter.com/count"
+        async src="https://gc.zgo.at/count.js"></script>
+<title>After Paradise — development logbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: the battle HUD «Броня» — riveted chamfered steel plates on a dark field, squad cyan for the squad, amber for pilots, acid green for Overwatch. One dark look on purpose, like the game. */
+:root {
+  --field: #0a0f13;
+  --plate: #121a20;
+  --plate-hi: #18232b;
+  --steel: #34434e;
+  --rivet: #5c6d79;
+  --ink: #dbe6ec;
+  --ink-dim: #93a4ae;
+  --cyan: #4fd6ff;
+  --cyan-deep: #1d6f8c;
+  --amber: #f0b24c;
+  --acid: #c9e14b;
+  --red: #ef5a4a;
+  --font-display: "Exo 2", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Exo 2", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --cut: 14px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--field);
+  color: var(--ink);
+  font: 16px/1.55 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+img { display: block; max-width: 100%; height: auto; }
+a { color: var(--cyan); }
+:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+
+.wrap {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* ---------- plate: chamfered, riveted ---------- */
+.plate {
+  position: relative;
+  background: var(--steel);
+  clip-path: polygon(var(--cut) 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, var(--cut) 100%, 0 calc(100% - var(--cut)), 0 var(--cut));
+  padding: 1px;
+}
+.plate > .in {
+  position: relative;
+  height: 100%;
+  background:
+    radial-gradient(circle at 9px 9px, var(--rivet) 0 2.2px, transparent 2.8px),
+    radial-gradient(circle at calc(100% - 9px) 9px, var(--rivet) 0 2.2px, transparent 2.8px),
+    radial-gradient(circle at 9px calc(100% - 9px), var(--rivet) 0 2.2px, transparent 2.8px),
+    radial-gradient(circle at calc(100% - 9px) calc(100% - 9px), var(--rivet) 0 2.2px, transparent 2.8px),
+    linear-gradient(180deg, var(--plate-hi), var(--plate) 120px);
+  clip-path: inherit;
+}
+.plate::after { /* neon strip on top edge, like the HUD */
+  content: "";
+  position: absolute;
+  top: 0; left: 30%; right: 30%;
+  height: 2px;
+  background: var(--cyan);
+  box-shadow: 0 0 10px var(--cyan);
+}
+
+/* ---------- hero ---------- */
+.hero {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--steel);
+}
+.hero img.bg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: 50% 40%;
+  filter: saturate(.8) brightness(.55);
+}
+.hero::before {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, rgba(10,15,19,.2), var(--field) 96%);
+  z-index: 1;
+}
+.hero .wrap { position: relative; z-index: 2; padding-block: clamp(56px, 12vw, 128px) 36px; }
+.eyebrow {
+  font: 600 12px/1.3 var(--font-mono);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+h1 {
+  font: 800 clamp(40px, 8vw, 84px)/0.95 var(--font-display);
+  letter-spacing: -.01em;
+  margin: 14px 0 16px;
+  text-transform: uppercase;
+  text-wrap: balance;
+  text-shadow: 0 0 24px rgba(79,214,255,.25);
+}
+.lede { max-width: 60ch; font-size: clamp(16px, 2.2vw, 19px); color: var(--ink); margin: 0; }
+.readout {
+  margin-top: 26px;
+  display: flex; flex-wrap: wrap; gap: 8px 22px;
+  font: 13px/1.4 var(--font-mono);
+  color: var(--ink-dim);
+}
+.readout b { color: var(--ink); font-weight: 600; }
+
+/* ---------- nav ---------- */
+nav.tabs {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: rgba(10,15,19,.92);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--steel);
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--field); }
+nav.tabs .wrap { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+nav.tabs a {
+  flex: none;
+  padding: 14px 14px 12px;
+  font: 600 14px/1 var(--font-display);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+}
+nav.tabs a:hover { color: var(--ink); border-bottom-color: var(--cyan-deep); }
+
+section { padding-block: 56px 8px; scroll-margin-top: 52px; }
+h2 {
+  font: 700 clamp(26px, 4vw, 36px)/1.1 var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  margin: 8px 0 12px;
+  text-wrap: balance;
+}
+.sec-note { max-width: 66ch; color: var(--ink-dim); margin: 0 0 28px; }
+
+/* ---------- chips ---------- */
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font: 600 11px/1 var(--font-mono);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 6px 8px 5px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+}
+.chip::before { content: ""; width: 6px; height: 6px; background: currentColor; box-shadow: 0 0 6px currentColor; }
+.st-done { color: var(--cyan); }
+.st-play { color: var(--amber); }
+.st-work { color: var(--acid); }
+.st-idea { color: var(--ink-dim); }
+.st-talk { color: var(--red); }
+.kind { color: var(--ink-dim); border-color: var(--steel); }
+.kind::before { display: none; }
+
+/* ---------- missions ---------- */
+.missions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.mission .in { display: flex; flex-direction: column; }
+.mission .shot { position: relative; aspect-ratio: 16 / 8; overflow: hidden; background: #070a0d; }
+.mission .shot img { width: 100%; height: 100%; object-fit: cover; }
+.mission .shot.blank {
+  display: grid; place-items: center;
+  background:
+    repeating-linear-gradient(45deg, rgba(79,214,255,.05) 0 10px, transparent 10px 20px),
+    #0b1115;
+  color: var(--ink-dim);
+  font: 600 13px/1.4 var(--font-mono);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 16px;
+}
+.mission .num {
+  position: absolute; left: 14px; bottom: 10px;
+  font: 800 52px/1 var(--font-display);
+  color: var(--ink);
+  text-shadow: 0 2px 14px rgba(0,0,0,.9);
+}
+.mission .body { padding: 16px 20px 22px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.mission .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.mission h3 { font: 700 23px/1.15 var(--font-display); margin: 2px 0 0; }
+.mission p { margin: 0; color: var(--ink); }
+.left-title {
+  font: 600 11px/1 var(--font-mono);
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-top: 4px;
+}
+ul.left { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+ul.left li { position: relative; padding-left: 18px; color: var(--ink); }
+ul.left li::before { content: ""; position: absolute; left: 2px; top: .62em; width: 7px; height: 7px; border: 1px solid var(--cyan); transform: rotate(45deg); }
+.mission.wide { grid-column: 1 / -1; }
+.mission.wide .in { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); }
+.mission.wide .shot { aspect-ratio: auto; min-height: 100%; }
+
+/* ---------- Overwatch / proposal box ---------- */
+.comms {
+  border-left: 3px solid var(--acid);
+  background: rgba(201,225,75,.06);
+  padding: 12px 14px;
+  font-size: 15px;
+}
+.comms .who { font: 600 12px/1 var(--font-mono); color: var(--acid); letter-spacing: .08em; display: block; margin-bottom: 6px; }
+
+/* ---------- bestiary ---------- */
+.beasts { display: grid; gap: 14px; }
+.beast .in { padding: 18px 20px 20px; display: grid; gap: 10px; }
+.beast .role { font: 600 12px/1 var(--font-mono); color: var(--amber); letter-spacing: .08em; text-transform: uppercase; }
+.beast h3 { font: 700 22px/1.2 var(--font-display); margin: 0; }
+.sheets { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+.sheets figure { margin: 0; }
+.sheets img { width: 100%; height: auto; display: block; border: 1px solid var(--steel); background: #e9eef2; cursor: zoom-in; }
+.sheets figcaption { font: 12px/1.4 var(--font-mono); color: var(--ink-dim); margin-top: 6px; }
+.sheets.covers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sheets.covers figure:first-child { grid-column: 1 / -1; }
+@media (max-width: 600px) { .sheets.covers { grid-template-columns: 1fr; } }
+.kitchen-sub { font: 700 15px/1.2 var(--font-mono); color: var(--cyan); letter-spacing: .1em; text-transform: uppercase; margin: 34px 0 10px; }
+.kitchen-sub:first-of-type { margin-top: 8px; }
+
+/* ---------- voices ---------- */
+.voices .in { padding: 20px 22px 22px; display: grid; gap: 10px; }
+.voices p { margin: 0; }
+
+/* ---------- log ---------- */
+.log { display: grid; gap: 0; position: relative; }
+.entry { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 22px; padding: 22px 0; border-top: 1px dashed var(--steel); }
+.entry:first-child { border-top: 0; }
+.entry time {
+  font: 600 14px/1.3 var(--font-mono);
+  color: var(--cyan);
+  font-variant-numeric: tabular-nums;
+}
+.entry time span { display: block; color: var(--ink-dim); font-weight: 400; font-size: 12px; margin-top: 4px; }
+.entry h3 { font: 700 20px/1.2 var(--font-display); margin: 0 0 8px; text-wrap: balance; }
+.entry .txt { min-width: 0; }
+.entry ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; }
+.entry li::marker { color: var(--cyan-deep); }
+.entry figure { margin: 14px 0 0; max-width: 640px; }
+.entry figure img { border: 1px solid var(--steel); }
+.entry figcaption { font: 12px/1.4 var(--font-mono); color: var(--ink-dim); margin-top: 6px; }
+.pilot { color: var(--amber); font-weight: 600; }
+.ai { font-family: var(--font-mono); color: var(--cyan); font-size: .92em; }
+
+/* ---------- codex queue ---------- */
+.queue { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.q .in { padding: 18px 20px 20px; display: grid; gap: 8px; align-content: start; }
+.q .code { font: 700 30px/1 var(--font-mono); color: var(--ink); }
+.q h3 { font: 600 17px/1.25 var(--font-display); margin: 0; }
+.q p { margin: 0; color: var(--ink-dim); font-size: 15px; }
+
+/* ---------- next ---------- */
+.next { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 40px; counter-reset: n; margin: 0; padding: 0; list-style: none; }
+.next li { counter-increment: n; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+.next li::before { content: counter(n, decimal-leading-zero); font: 600 13px/1 var(--font-mono); color: var(--cyan); }
+.next b { font-weight: 600; }
+
+footer { padding-block: 56px 40px; color: var(--ink-dim); font: 12px/1.6 var(--font-mono); }
+footer .wrap { border-top: 1px solid var(--steel); padding-top: 18px; }
+
+@media (max-width: 860px) {
+  .missions, .queue, .next { grid-template-columns: minmax(0, 1fr); }
+  .mission.wide .in { display: flex; flex-direction: column; }
+  .mission.wide .shot { aspect-ratio: 16 / 9; }
+}
+@media (max-width: 560px) {
+  .entry { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .entry time span { display: inline; margin: 0 0 0 8px; }
+  .mission .num { font-size: 40px; }
+  :root { --cut: 10px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .plate::after { animation: pulse 3.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .45; } }
+}
+
+/* ---------- back to top ---------- */
+.to-top {
+  position: fixed; z-index: 15;
+  right: max(16px, env(safe-area-inset-right, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  font: 600 13px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--cyan); background: var(--plate); border: 1px solid var(--cyan-deep);
+  padding: 12px 14px; cursor: pointer; box-shadow: 0 0 14px rgba(79,214,255,.18);
+}
+.to-top:hover { color: var(--ink); border-color: var(--cyan); }
+
+/* ---------- zoom ---------- */
+[hidden] { display: none !important; }
+.shot img, .entry figure img { cursor: zoom-in; }
+.zoom {
+  position: fixed; inset: 0; z-index: 20;
+  display: grid; place-items: center;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  background: rgba(5,8,10,.94);
+  cursor: zoom-out;
+}
+.zoom img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; border: 1px solid var(--steel); box-shadow: 0 0 40px rgba(79,214,255,.15); }
+.zoom button {
+  position: absolute; top: max(12px, env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px));
+  font: 600 13px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink); background: var(--plate); border: 1px solid var(--steel); padding: 10px 12px; cursor: pointer;
+}
+.intro-video {
+  display: block; width: 100%; height: auto; aspect-ratio: 16 / 9;
+  background: #000; border: 1px solid var(--steel);
+  box-shadow: 0 0 40px rgba(79,214,255,.12);
+}
+.intro-cap { margin-top: 10px; color: var(--muted, #8a979e); font-size: 14px; }
+
+.lang-switch {
+  position: absolute; z-index: 3;
+  top: max(14px, env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+  font: 600 13px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--cyan); text-decoration: none;
+  background: rgba(10,15,19,.7); border: 1px solid var(--cyan-deep); padding: 10px 12px;
+}
+.lang-switch:hover { color: var(--ink); border-color: var(--cyan); }
+</style>
+</head>
+<body>
+<header class="hero">
+  <a class="lang-switch" href="../" hreflang="ru" lang="ru">Русский</a>
+  <img class="bg" src="../img/hero.jpg" alt="">
+  <div class="wrap">
+    <div class="eyebrow">Iron Rain · development logbook</div>
+    <h1>After Paradise</h1>
+    <p class="lede">A turn-based tactics game about a squad of mechs on Earth after “paradise”. The aliens came bearing a cure and left mutants behind. Here you can see what already works in the game, which missions are ready and what comes next.</p>
+    <div class="readout">
+      <span>Demo: <b>0.6</b></span>
+      <span>Planet: <b>Terra</b></span>
+      <span>Missions ready: <b>4 of 7</b> + tutorial</span>
+      <span>Updated <b>11 Nov 2026</b></span>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="wrap">
+    <a href="#intro">Intro</a>
+    <a href="#campaign">Campaign</a>
+    <a href="#log">Log</a>
+    <a href="#voices">Voices</a>
+    <a href="#bestiary">Sketchbook</a>
+    <a href="#next">Next</a>
+    <a href="#contact">Contact</a>
+  </div>
+</nav>
+
+<main>
+<section id="intro">
+  <div class="wrap">
+    <div class="eyebrow">Intro</div>
+    <h2>How it all began: the intro before the first mission</h2>
+    <p class="sec-note">The game opens with a black-and-white hand-drawn story of how “paradise” arrived and how it ended. It is told by Victor, the scientist who once opened the door to the aliens. The camera drifts across drawn pages, captions appear as you read, and the only colour is pink: that is how the aliens look in this world. The music is by the game’s author. Victor’s voice will be recorded by dubbing actors; for now the captions are read only.</p>
+    <video class="intro-video" controls preload="metadata" playsinline poster="../img/intro/intro_poster_en.jpg">
+      <source src="../img/intro/intro_en.mp4" type="video/mp4">
+    </video>
+    <p class="intro-cap">Alpha version: no voice or sound effects, music only. About three minutes.</p>
+  </div>
+</section>
+
+<section id="campaign">
+  <div class="wrap">
+    <div class="eyebrow">Campaign · Terra</div>
+    <h2>Seven missions of the first planet</h2>
+    <p class="sec-note">Every planet has seven missions, the seventh is a boss. Story missions alternate with simple battles: a simple battle is a breather that gives pilots experience and items from pods, but it always has a small goal of its own. The campaign starts with the Drill.</p>
+
+    <div class="missions">
+
+      <article class="plate mission">
+        <div class="in">
+          <div class="shot"><img src="../img/drill.jpg" alt="End of the Drill: the “Drill complete” banner"><span class="num">00</span></div>
+          <div class="body">
+            <div class="chips"><span class="chip kind">Tutorial</span><span class="chip st-done">Done</span></div>
+            <h3>Drill</h3>
+            <p>A short battle with hints: the squad’s AI explains step by step, the pilot cracks jokes. It runs on first launch; you can skip it and replay it from the settings.</p>
+            <p>Four people have played it, and they liked the balance.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="plate mission">
+        <div class="in">
+          <div class="shot"><img src="../img/clear.jpg" alt="Battle: Lancer hits mutants with a spread shot"><span class="num">01</span></div>
+          <div class="body">
+            <div class="chips"><span class="chip kind">Simple battle</span><span class="chip st-done">Done</span></div>
+            <h3>Clearance</h3>
+            <p>Drop from Iron Rain onto a random map and fight to the last mutant: boars, Spitter, Knuckleback and Shiva.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="plate mission wide">
+        <div class="in">
+          <div class="shot"><img src="../img/ampoule.jpg" alt="Vial: Iron Rain over the evac zone, two Spitters and two Knucklebacks shelling the ship"><span class="num">02</span></div>
+          <div class="body">
+            <div class="chips"><span class="chip kind">Story</span><span class="chip st-play">Playable · awaiting a run</span></div>
+            <h3>Vial</h3>
+            <p>A hospital in a swamp holds a vaccine made before the aliens came. Only the light Wraith can cross the narrow footbridge. The moment the vial reaches the bridge, the mutants smell it and come in waves: 3, 4, 5 boars. Then the vial has to be dragged to the evac zone while you wait for Iron Rain. One turn before it arrives, two Spitters and two Knucklebacks come out at the bottom right and start shelling the ship as the squad closes in.</p>
+            <div class="comms"><span class="who">OVERWATCH · SATELLITE</span>Alert! Mutants are homing in on the vial’s signal. Everyone to the evac zone!</div>
+            <div class="left-title">To do</div>
+            <ul class="left">
+              <li>The author plays the mission himself and sends fixes.</li>
+              <li>Testers report that enemies hit each other. Friendly fire is part of the design, but the AI shouldn’t do it on purpose: sort it out from the reports.</li>
+              <li>An objective banner that slides under the “Mission” button.</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+      <article class="plate mission">
+        <div class="in">
+          <div class="shot"><img src="../img/lure.jpg" alt="Bait: Velvet among the mutants"><span class="num">03</span></div>
+          <div class="body">
+            <div class="chips"><span class="chip kind">Simple battle</span><span class="chip st-play">Done · awaiting a run</span></div>
+            <h3>Bait</h3>
+            <p>Overwatch picks up a “survivor’s signal”, but it’s Velvet: she calls mechs to her, and a cloud of acid dust bursts next to her. This is where the player meets her in a calm battle.</p>
+            <p>Side goal: Velvet lures no one. Pilots get experience for it a second time.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="plate mission">
+        <div class="in">
+          <div class="shot"><img src="../img/artillery.jpg" alt="Artillery: a base behind barbed wire, wrecked vehicles, a gun in the yard"><span class="num">04</span></div>
+          <div class="body">
+            <div class="chips"><span class="chip kind">Story</span><span class="chip st-play">Done · awaiting a run</span></div>
+            <h3>Artillery</h3>
+            <p>An abandoned base behind barbed wire with an old gun in the yard. A mech starts it up, and the whole horde of mutants comes to wreck it. Hold out for five turns. One of the pods holds a jetpack: with it, Wraith or Lancer can fly over the fence.</p>
+            <div class="left-title">Difficulty levels</div>
+            <ul class="left">
+              <li>Drizzle: the gun is intact, waves of 4, 4 and 5 boars.</li>
+              <li>Downpour: the gun is battered, waves of 5, 5 and 6.</li>
+              <li>Iron Rain: a rocket launcher instead of the gun, waves of 6, 6 and 8.</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+      <article class="plate mission">
+        <div class="in">
+          <div class="shot blank"><span>05 · comms tower · 4 turns</span></div>
+          <div class="body">
+            <div class="chips"><span class="chip kind">Simple battle</span><span class="chip st-done">Decided</span></div>
+            <h3>Fifth mission</h3>
+            <p>A breather before the sixth, story mission. A simpler battle with its own condition: finish within four turns and don’t let the mutants break the comms tower.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="plate mission">
+        <div class="in">
+          <div class="shot blank"><span>06 · the cockpit drawn in detail</span></div>
+          <div class="body">
+            <div class="chips"><span class="chip kind">Story</span><span class="chip st-idea">Concept ready</span></div>
+            <h3>Save the Captain</h3>
+            <p>The camera shows an old fighter jet downed in a swamp. Through the clear canopy you can see a living man: Terra Air Force captain Billy Big Bogs, one of the last resistance fighters. The mutants are already heading for him.</p>
+            <p>Goal: fight through to the plane, beat off the waves and escort the captain to evac under cover. As a reward he hands over his personal weapon: it hits weakly, but never runs out of ammo.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="plate mission wide">
+        <div class="in">
+          <div class="shot"><img src="../img/bellows.jpg" alt="Bellows: a red-haired woman in a uniform jacket with a filter collar around her head" style="object-position: 50% 20%"><span class="num">07</span></div>
+          <div class="body">
+            <div class="chips"><span class="chip kind">Boss</span><span class="chip st-done">Rules decided</span></div>
+            <h3>Bellows</h3>
+            <p>The former commander of a military airfield: short red hair, uniform jacket, boots. Instead of arms she has wide webbed wings, and a filter collar rings her head. She flies in for the civilians.</p>
+            <p>Goal: save as many people as you can and kill Bellows. Acid from her collar eats armour every turn, so the pods hold medkits.</p>
+            <div class="left-title">Decided</div>
+            <ul class="left">
+              <li>Bellows flies up to a house and next turn inhales everyone inside through her collar, healing herself for each one. To stop her, push her away from the house.</li>
+              <li>Or a mech next to the house leads the people out, and they run to Iron Rain.</li>
+              <li>Every two people saved earn the squad a lab credit.</li>
+              <li>Each of the three pods holds a medkit: it removes acid, and on easy difficulty it also heals.</li>
+              <li>The 3×3 acid cloud is shown one turn before it hits. The cloud and the house hunt alternate.</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<section id="log">
+  <div class="wrap">
+    <div class="eyebrow">Work log</div>
+    <h2>What was done and when</h2>
+    <p class="sec-note">Newest entries first. The game is made by a team of three. The author came up with all of it: the world and its story, the battle rules, missions, mutants and pilots. He also writes the music and sounds and plays every build. Codex draws, Claude writes the code. The squad will be voiced by professional dubbing actors. The art is made with AI: Codex draws from the author’s descriptions and sketches, and every image goes through sketches and the author’s choice.</p>
+
+    <div class="log">
+
+      <div class="entry">
+        <time>11 Nov<span>Wednesday</span></time>
+        <div class="txt">
+          <h3>Intro: hands, glasses and clean skin</h3>
+          <ul>
+            <li>The author looked at the intro slides up close and found the spots where the drawing gives the generator away: hands where you can’t count the fingers, and glasses whose temples merged into one arc. Codex redrew the hands of the scientists at the table and of the crowd at the celebration, and Victor now has normal glasses.</li>
+            <li>The intro camera moves in close, and the skin showed a fine, scale-like generator pattern. Codex cleaned it off Victor’s face and hands and off the hands of the neighbour whose “hands changed”. The mutation itself stays: long fingers and extra joints are still there.</li>
+            <li>Codex now checks skin at zoom already at the sketch stage, so new drawings come out clean.</li>
+            <li>Testers said the captions sat too close to the edge of the frame and were hard to read. They now sit almost three times further from the edge.</li>
+            <li>The intro video at the top of the journal is updated.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>10 Nov<span>Tuesday</span></time>
+        <div class="txt">
+          <h3>The intro with the author’s music</h3>
+          <ul>
+            <li>The whole intro is assembled: twelve drawn slides on six pages. The camera drifts across the frames by itself, captions appear as you read, pages turn on their own. A click hurries it along, and “Skip” goes straight to the Drill.</li>
+            <li>The captions are hand-lettered on paper slips, slightly askew, as if pasted in. Every sentence starts on a new line.</li>
+            <li>The aliens’ pink glow shimmers into lilac like mother-of-pearl. The rest of the drawing is pencil.</li>
+            <li>Codex finished cleaning the drawings: removed the generator pattern from faces and redrew the doctor and nurse on the hospital slide, who now celebrate clean test results.</li>
+            <li>The music is the author’s own track. The timing follows it: the track swells to full strength exactly at the celebration, “We called it paradise”.</li>
+            <li>The intro video is in the new “Intro” section at the top of the journal.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>9 Nov<span>Monday</span></time>
+        <div class="txt">
+          <h3>Squad voices and the sketchbook</h3>
+          <ul>
+            <li>The pilots, Overwatch and the captain will be voiced by professional film dubbing actors. For now we write the lines and try them out in the game; recording comes once the texts settle, so the actors read the final version once.</li>
+            <li>The journal has a “Sketchbook”: besides the mutant sketches it now has cover sketches. Codex drew two options, the author picked a third, the very first one — alive and not quite like the game, “and that’s fine”.</li>
+            <li>The author is playing Vial again with the new, meaner mutants; after that the build goes to testers.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>8 Nov<span>Sunday</span></time>
+        <div class="txt">
+          <h3>Mean mutants, Knuckleback’s concrete and a thought about multiplayer</h3>
+          <ul>
+            <li>The author came back from vacation and played Vial. The main thing he and all the testers said: the enemies are sluggish. Measurements confirmed it — four turns out of five the mutants stood idle.</li>
+            <li>Now there are almost no idle turns. If a mutant can’t reach a mech, it hits a supply pod or a tile next to a mech, which makes those tiles dangerous to step on. Attacks in a crowd went up from 22% to 40% of turns.</li>
+            <li>Knuckleback learned to throw concrete 2–4 tiles. If you dodge, the chunk stays on the tile as rubble, and a single shot breaks it. Codex drew the chunk and the rubble.</li>
+            <li>Click a mutant and a red trail runs from it to its target: you can see where it will strike.</li>
+            <li>Overwatch prompts what the mission needs next: shotgun, ammo, vial, evac. The frame blinks red until the step is done.</li>
+            <li>In Vial, after the alarm the mutants come out right next to the evac zone, to make it hot there.</li>
+            <li>Tester builds moved to itch.io: a private page with automatic updates. Codex drew a cover: Bastion versus Knuckleback.</li>
+            <li>The author has an idea for multiplayer in later versions of the game. It won’t be in the first release, but the idea is written down.</li>
+            <li>Claude estimated how hard it is. For turn-based tactics, networking is one of the more feasible additions: the network carries short commands like “Bastion moves to C4”, not a picture sixty times a second.</li>
+            <li>The battle is already built in a convenient way: the rules are separate from the visuals, and randomness comes from the map seed. Two computers with the same seed and the same commands get the same battle.</li>
+            <li>The simplest step is two players at one computer. With Steam Remote Play Together you can then play with a friend in another city, and the friend doesn’t even need to buy the game.</li>
+            <li>Real online co-op would take a month or two of work; we’ll do it if players want to play together. The most interesting and the hardest option is one player on the mechs and the other on the mutants: the mutants announce their attacks, the squad responds.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>23 Oct<span>Thursday</span></time>
+        <div class="txt">
+          <h3>Bellows in the game, mutants no longer hit their own</h3>
+          <ul>
+            <li>Bellows appears in the game for the first time in her final look. For now just to show her, through the settings. In flight she hovers over the tiles without touching the ground.</li>
+            <li>Mutants in a crowd stopped hitting each other by accident: they now plan their attacks in turn and don’t strike where a neighbour will be.</li>
+            <li>Backpack: one click on a weapon and it’s in hand for 1 AP, replacing a similar one (shotgun instead of rifle). Lancer finally picks up the shotgun.</li>
+            <li>The pilot skill “Finisher” is now noticeable: a wounded enemy with two health or less takes one extra damage.</li>
+            <li>Testers couldn’t finish reading lines in battle — now they stay on screen longer.</li>
+            <li>Two new enemies designed: Knuckleback hurls concrete slabs, and Salvo shells the Iron Rain ship from afar.</li>
+            <li>The journal moved to its own address and got a “Bestiary”: all the mutant sketches with Overwatch’s notes.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>22 Oct<span>Wednesday</span></time>
+        <div class="txt">
+          <h3>Demo 0.4 and a bigger panel</h3>
+          <ul>
+            <li>Testers got demo 0.4: difficulty levels, Artillery fully drawn, the jetpack, respawn tiles, and greyed-out buttons now explain why they can’t be pressed.</li>
+            <li>Testers found the bottom panel too small — it got taller. Mech portraits are now big, and action names fit in full.</li>
+            <li>The gun and rocket launcher in Artillery got temporary icons. Codex will draw the permanent ones in one series with the backpack icon.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>20 Oct<span>Monday</span></time>
+        <div class="txt">
+          <h3>Save the Captain, a new Bellows, a clearer backpack</h3>
+          <ul>
+            <li>The author wrote the story of the sixth mission: a fighter jet downed in a swamp, a living captain in the cockpit, a rescue under fire and evacuation.</li>
+            <li>We’ll draw the cockpit with the captain in detail: a clear canopy with the captain plainly visible behind the glass.</li>
+            <li>Draft lines for the captain, Overwatch and Hana are ready for the voice actors.</li>
+            <li>Bellows got a new look: a grey-haired airfield commander with a headset around her neck. Codex is drawing her battle frames.</li>
+            <li>After a tester’s report the backpack is clearer: if an item doesn’t fit a mech, a red “forbidden” sign shows on the button, and on click it pulses and the game says why.</li>
+            <li>Codex got tasks for “before and after” Bellows art for posts and for a hand-drawn backpack icon.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>19 Oct<span>Sunday</span></time>
+        <div class="txt">
+          <h3>Campaign order and this journal</h3>
+          <ul>
+            <li>Terra’s line-up is set: the fifth mission is a simple battle, the sixth is a story mission, the seventh is the boss Bellows.</li>
+            <li>Artillery fully drawn: the base, a fence with barbed wire, gates, wrecked vehicles, the gun and the rocket launcher, a jetpack on Wraith’s and Lancer’s backs with flame from the nozzles.</li>
+            <li>Vial: by the time Iron Rain arrives, two Spitters and two Knucklebacks are shelling the ship.</li>
+            <li>Fifth mission: a timed simple battle at a comms tower.</li>
+            <li>Bellows is Terra’s boss. Codex got a task for her new look.</li>
+            <li>Seventh mission: Bellows hunts civilians, and the rescued bring the squad credits.</li>
+            <li>This journal appeared.</li>
+            <li>Difficulty levels are named after rain: Drizzle, Downpour, Iron Rain.</li>
+            <li>Mutants got more attentive: they hit a mech that stands in their way, and a mech on a respawn point takes damage.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>18 Oct<span>Saturday</span></time>
+        <div class="txt">
+          <h3>Bait, Artillery, the jetpack, demo 0.3</h3>
+          <ul>
+            <li>The game is called <b>After Paradise</b>. English is now the main language; Russian can be switched on in the settings.</li>
+            <li>Artillery plays from start to finish: the fence breaks after two hits, the gun moves and fires in an arc, mutants come at it in waves.</li>
+            <li>Jetpack: a mech flies in a straight line over anything, one tile per action point. Bastion is too heavy.</li>
+            <li>Bait with a side goal; Velvet left the first mission, and the player now meets her here.</li>
+            <li>The mechs in the drawings got attachment points: back, shoulders, waist. Any new gear is drawn once and fits any mech.</li>
+            <li>Demo 0.3 went to testers.</li>
+          </ul>
+          <figure><img src="../img/jetpack.jpg" alt="Wraith with a jetpack: blue flight tiles over the fence" loading="lazy"><figcaption>Where Wraith can fly with the jetpack, still on placeholder blocks</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>17 Oct<span>Friday</span></time>
+        <div class="txt">
+          <h3>Velvet complete</h3>
+          <ul>
+            <li>Her Call pulls a mech towards Velvet. If a mech ends its turn next to her, she bursts into a cloud of acid dust, leaving pools of acid on the ground.</li>
+            <li>The squad reacts to her with short scenes in the battle log.</li>
+            <li>The Iron Rain ship is redrawn: old, burnt, scorched by hits.</li>
+          </ul>
+          <figure><img src="../img/velvet.jpg" alt="Velvet calls a mech to her" loading="lazy"><figcaption>Velvet’s Call: the arrow shows where the mech will be pulled</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>16 Oct<span>Thursday</span></time>
+        <div class="txt">
+          <h3>Vial and pilot experience</h3>
+          <ul>
+            <li>Vial plays in full: the swamp, the bridge, the hospital, the alarm, waves of boars, evacuation.</li>
+            <li>Pilots earn experience for victories and choose skills. Each has an innate trait.</li>
+            <li>Pods with items drop from orbit, and a shot can break them.</li>
+            <li>Turn rewind: one mistake per battle can be taken back.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>15 Oct<span>Wednesday</span></time>
+        <div class="txt">
+          <h3>Living pilots and comms</h3>
+          <ul>
+            <li>The mech card shows the cockpit with its pilot: <span class="pilot">Walt Kessler</span>, <span class="pilot">Mireille Dufaut</span> and <span class="pilot">John Abroak</span> blink, wince and shout under fire. The picture is noisy, like a combat video feed.</li>
+            <li>A comms window with <span class="pilot">Hana Ferreira</span>, the pilot of Iron Rain.</li>
+          </ul>
+          <figure><img src="../img/hana.jpg" alt="Comms window: Hana Ferreira, the ship under fire" loading="lazy"><figcaption>Hana on comms while the ship takes hits</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>14 Oct<span>Tuesday</span></time>
+        <div class="txt">
+          <h3>Iron Rain drop and the Drill</h3>
+          <ul>
+            <li>The player places the squad, the ship comes in to land and lowers the mechs from its belly: dust, smoke, engine fire.</li>
+            <li>Wrecks of your own mechs stay on the field and sink if pushed into water.</li>
+            <li>The Drill: the AI <span class="ai">VX-3A7F-09</span> walks the player through step by step.</li>
+            <li>Seven painted Earth backgrounds.</li>
+          </ul>
+          <figure><img src="../img/ironrain.jpg" alt="Iron Rain coming in to land over the field" loading="lazy"><figcaption>Iron Rain coming in to land</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>10–12 Oct</time>
+        <div class="txt">
+          <h3>A painted world and the “Armour” interface</h3>
+          <ul>
+            <li>3D models gave way to painted sprites: mechs and mutants are drawn for a single camera angle.</li>
+            <li>The interface looks like a mech console: riveted frames, neon, a radar and an oscilloscope when idle.</li>
+            <li>Field zoom and a camera that follows whoever is moving.</li>
+            <li>Mechs can stand waist-deep in water; mutants drown.</li>
+          </ul>
+          <figure><img src="../img/cockpit.jpg" alt="Pilots in their cockpits in different moods" loading="lazy"><figcaption>Pilot moods in the cockpit</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="entry">
+        <time>3–4 Oct</time>
+        <div class="txt">
+          <h3>The first battle with cubes</h3>
+          <ul>
+            <li>An 8×8 field, three mechs: Bastion, Wraith, Lancer. Enemies announce their attacks in advance, and the player gets a chance to stop them.</li>
+            <li>Knockback, collisions, Wraith’s stealth, friendly fire (by design).</li>
+            <li>The battle log is written in lively language, in the spirit of Fallout.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section id="voices">
+  <div class="wrap">
+    <div class="eyebrow">Voices</div>
+    <h2>The squad will speak with actors’ voices</h2>
+    <article class="plate voices"><div class="in">
+      <p>The pilots, Overwatch and the captain will be voiced by professional dubbing actors: the people whose voices film heroes speak with in Russian dubs. This is not speech synthesis and not “friends doing voices” — every line will be recorded in a studio.</p>
+      <p>There are already more than a hundred lines: pilots bicker on the radio, Overwatch comments on every turn, mutants get their own “field notes”. For now we’re trying the texts out in the game, and we’ll record once they settle — so the actors read the final version once.</p>
+      <div class="comms"><span class="who">OVERWATCH · ON AIR</span>Radio check. Voices are coming. Whoever said “synthesizer” is on watch at Iron Rain.</div>
+    </div></article>
+  </div>
+</section>
+
+<section id="bestiary">
+  <div class="wrap">
+    <div class="eyebrow">Sketchbook</div>
+    <h2>Sketches and drafts</h2>
+    <p class="sec-note">Everything drawn for the game goes through sketches: the author describes what an image should be, Codex draws several options, the author picks one. Here is what came out along the way, including what didn’t make it into the game.</p>
+
+    <h3 class="kitchen-sub" id="cover">Cover: Bastion versus Knuckleback</h3>
+    <p class="sec-note">The author’s idea was like the strategy game covers of the nineties: two fighters from two sides face off. Codex drew two options in the game’s style, but the author picked the very first one — alive and not quite like the game: “not everything is recognisable, and that’s fine”. The cover greets testers on the game’s private page.</p>
+    <div class="sheets covers">
+      <figure><img src="../img/kitchen/cover_final.jpg" alt="Cover: Bastion and Knuckleback with a chunk of concrete, the chosen option" loading="lazy"><figcaption>The chosen option, 8 Nov</figcaption></figure>
+      <figure><img src="../img/kitchen/cover_sketch_b.jpg" alt="Cover sketch B: a view over Bastion’s shoulder" loading="lazy"><figcaption>Sketch B: over Bastion’s shoulder</figcaption></figure>
+      <figure><img src="../img/kitchen/cover_sketch_c.jpg" alt="Cover sketch C: both on a ruined highway" loading="lazy"><figcaption>Sketch C: on a ruined highway</figcaption></figure>
+    </div>
+
+    <h3 class="kitchen-sub">Mutants</h3>
+    <p class="sec-note">Every mutant is invented by the author — a rough drawing and a long story of what it should be; Codex draws sketches from that description. Not all of them will reach the battlefield — some will change along the way, some will stay only here. The captions are Overwatch’s field notes.</p>
+    <div class="beasts">
+      <article class="plate beast"><div class="in"><span class="role">Fire support</span><h3>Salvo</h3><div class="comms"><span class="who">OVERWATCH · FIELD NOTE</span>A former pyrotechnician: the protective mask grew into his forehead. Stays behind his own and fires in an arc over their heads. A big target above the field is his favourite — take care of Iron Rain.</div><div class="sheets"><figure><img src="../img/bestiary/salvo_concept.jpg" alt="Salvo: first sketch, 23 Oct" loading="lazy"><figcaption>First sketch, 23 Oct</figcaption></figure><figure><img src="../img/bestiary/salvo_views.jpg" alt="Salvo: front, side, back" loading="lazy"><figcaption>Front, side, back</figcaption></figure></div></div></article>
+      <article class="plate beast"><div class="in"><span class="role">Terra boss</span><h3>Bellows</h3><div class="comms"><span class="who">OVERWATCH · FIELD NOTE</span>Used to command an airfield and still wears her uniform jacket. Wings instead of arms, a filter collar around her neck: through it she inhales people and exhales acid. She flies to wherever civilians are left.</div><div class="sheets"><figure><img src="../img/bestiary/bellows_1009_a.jpg" alt="Bellows: first attempt, 9 Oct" loading="lazy"><figcaption>First attempt, 9 Oct</figcaption></figure><figure><img src="../img/bestiary/bellows_1009_b.jpg" alt="Bellows: first attempt, second version" loading="lazy"><figcaption>First attempt, second version</figcaption></figure><figure><img src="../img/bestiary/bellows_b1_b4.jpg" alt="Bellows: four looks B1–B4, 20 Oct" loading="lazy"><figcaption>Four looks B1–B4, 20 Oct</figcaption></figure><figure><img src="../img/bestiary/bellows_c1.jpg" alt="Bellows: option C1, 22 Oct" loading="lazy"><figcaption>Option C1, 22 Oct</figcaption></figure><figure><img src="../img/bestiary/bellows_c2.jpg" alt="Bellows: option C2" loading="lazy"><figcaption>Option C2</figcaption></figure><figure><img src="../img/bestiary/bellows_moth.jpg" alt="Bellows: option A, “moth”, 23 Oct" loading="lazy"><figcaption>Option A, “moth”, 23 Oct</figcaption></figure><figure><img src="../img/bestiary/bellows_trumpets.jpg" alt="Bellows: option B, “trumpets”" loading="lazy"><figcaption>Option B, “trumpets”</figcaption></figure><figure><img src="../img/bestiary/bellows_filter.jpg" alt="Bellows: option C, “filter”" loading="lazy"><figcaption>Option C, “filter”</figcaption></figure></div></div></article>
+      <article class="plate beast"><div class="in"><span class="role">Heavy fighter</span><h3>Knuckleback</h3><div class="comms"><span class="who">OVERWATCH · FIELD NOTE</span>Walks on the knuckles of huge fists, with a cap three sizes too small on his head. Throws mechs over himself and will soon be hurling concrete.</div><div class="sheets"><figure><img src="../img/bestiary/knuckleback.jpg" alt="Knuckleback: front, side, back, 9 Oct" loading="lazy"><figcaption>Front, side, back, 9 Oct</figcaption></figure></div></div></article>
+      <article class="plate beast"><div class="in"><span class="role">Ram</span><h3>Boar</h3><div class="comms"><span class="who">OVERWATCH · FIELD NOTE</span>Picks up speed in a straight line and hits on the run. Still wears human boots — someone once went to work in them.</div><div class="sheets"><figure><img src="../img/bestiary/boar.jpg" alt="Boar: front, side, back" loading="lazy"><figcaption>Front, side, back</figcaption></figure></div></div></article>
+      <article class="plate beast"><div class="in"><span class="role">Shooter</span><h3>Headbearer</h3><div class="comms"><span class="who">OVERWATCH · FIELD NOTE</span>Carries another head in his second hand, and it spits acid. Three tubes from his belly feed it. Better not ask where the head came from.</div><div class="sheets"><figure><img src="../img/bestiary/headbearer_a.jpg" alt="Headbearer: first version, 9 Oct" loading="lazy"><figcaption>First version, 9 Oct</figcaption></figure><figure><img src="../img/bestiary/headbearer_b.jpg" alt="Headbearer: second version" loading="lazy"><figcaption>Second version</figcaption></figure></div></div></article>
+      <article class="plate beast"><div class="in"><span class="role">Hunter</span><h3>Harpooner</h3><div class="comms"><span class="who">OVERWATCH · FIELD NOTE</span>A miner’s helmet, a huge right shoulder and a bone harpoon on a tendon. Reels prey in, then strikes with a hook.</div><div class="sheets"><figure><img src="../img/bestiary/harpooner.jpg" alt="Harpooner: front, side, back, 9 Oct" loading="lazy"><figcaption>Front, side, back, 9 Oct</figcaption></figure></div></div></article>
+      <article class="plate beast"><div class="in"><span class="role">Living mortar</span><h3>Kilnback</h3><div class="comms"><span class="who">OVERWATCH · FIELD NOTE</span>Squat, held together by the straps of work overalls. Lobs shots over mountains onto a tile chosen in advance.</div><div class="sheets"><figure><img src="../img/bestiary/kilnback.jpg" alt="Kilnback: front, side, back, 9 Oct" loading="lazy"><figcaption>Front, side, back, 9 Oct</figcaption></figure></div></div></article>
+      <article class="plate beast"><div class="in"><span class="role">Trapper</span><h3>Stitcher</h3><div class="comms"><span class="who">OVERWATCH · FIELD NOTE</span>A scrap of a hospital gown and three hollow needles on one hand. Stitches mechs in place with sticky thread.</div><div class="sheets"><figure><img src="../img/bestiary/stitcher.jpg" alt="Stitcher: front, side, back, 9 Oct" loading="lazy"><figcaption>Front, side, back, 9 Oct</figcaption></figure></div></div></article>
+      <article class="plate beast"><div class="in"><span class="role">Demolisher</span><h3>Broodlung</h3><div class="comms"><span class="who">OVERWATCH · FIELD NOTE</span>A belly with three bubble capsules and a maw. Tosses a capsule, and a turn later it explodes. Never let go of his old bag.</div><div class="sheets"><figure><img src="../img/bestiary/broodlung.jpg" alt="Broodlung: front, side, back, 9 Oct" loading="lazy"><figcaption>Front, side, back, 9 Oct</figcaption></figure></div></div></article>
+    </div>
+  </div>
+</section>
+
+
+<section id="next">
+  <div class="wrap">
+    <div class="eyebrow">Next</div>
+    <h2>Next steps</h2>
+    <ol class="next">
+      <li><span><b>Artillery</b>: the author’s run and number tweaks.</span></li>
+      <li><span><b>Vial</b>: fixes after the author’s run and sorting out “enemies hit their own”.</span></li>
+      <li><span><b>Boss Bellows</b>: she’s already in the game for show. Next: take-off, landing, the acid cloud and boss behaviour, then the mission itself.</span></li>
+      <li><span><b>Sixth mission</b>: agree how the captain gets out of the cockpit and walks to evac, and give Codex a task for the plane and the captain.</span></li>
+      <li><span><b>Fifth mission</b>: build the map with the comms tower and the turn countdown.</span></li>
+      <li><span><b>Enemy AI</b>: rear shooters sit idle; fix together with the balance.</span></li>
+      <li><span><b>Voice</b>: a new batch of lines for the dubbing actors.</span></li>
+    </ol>
+  </div>
+</section>
+<!-- English copy of contact.html. Contact form for the public journal only (tools/build_public_journal.py inserts it
+     before </main> when WEB3FORMS_KEY is set). Web3Forms forwards the message to the
+     author's mail; the address is never on the page. The access key is public by design. -->
+<style>
+.contact .in { padding: 22px 22px 24px; display: grid; gap: 14px; }
+.contact form { display: grid; gap: 12px; max-width: 640px; }
+.contact label { display: grid; gap: 6px; font: 600 12px/1 var(--font-mono); color: var(--ink-dim); letter-spacing: .08em; text-transform: uppercase; }
+.contact input, .contact select, .contact textarea {
+  font: 16px/1.4 var(--font-body); color: var(--ink);
+  background: var(--field); border: 1px solid var(--steel); padding: 10px 12px; width: 100%;
+}
+.contact textarea { min-height: 140px; resize: vertical; }
+.contact input:focus, .contact select:focus, .contact textarea:focus { outline: 2px solid var(--cyan); outline-offset: 0; border-color: var(--cyan); }
+.contact .bot { position: absolute; left: -9999px; }
+.contact button {
+  justify-self: start; font: 700 14px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--field); background: var(--cyan); border: 0; padding: 14px 22px; cursor: pointer;
+}
+.contact button[disabled] { opacity: .6; cursor: default; }
+.contact .status { margin: 0; min-height: 1.4em; }
+.contact-bug { margin: -6px 0 18px; font: 14px/1.5 var(--font-mono); color: var(--ink-dim); max-width: 62ch; }
+.contact-bug b { color: var(--amber); font-weight: 600; }
+.contact .status.ok { color: var(--acid); }
+.contact .status.err { color: var(--red); }
+</style>
+<section id="contact">
+  <div class="wrap">
+    <div class="eyebrow">Contact</div>
+    <h2>Get in touch</h2>
+    <p class="sec-note">Publishers, streamers, journalists, artists, musicians — anyone interested in the game, write to us. The message goes to the author, and we’ll reply to the email you give.</p>
+    <p class="contact-bug" id="bug">Playing the demo and something went wrong? Choose <b>“Bug in the game”</b> and tell us: version, mission, round, what you did and what happened. Screenshots: a cloud link, or attach them to your reply to our email.</p>
+    <article class="plate contact"><div class="in">
+      <form id="contact-form" action="https://api.web3forms.com/submit" method="POST">
+        <input type="hidden" name="access_key" value="94351dea-fddf-4dbc-bd83-68398df3226e">
+        <input type="hidden" name="subject" id="contact-subject" value="After Paradise: message from the journal (EN)">
+        <input type="hidden" name="from_name" value="After Paradise — journal (EN)">
+        <input type="checkbox" name="botcheck" class="bot" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <label>Your name
+          <input type="text" name="name" required autocomplete="name">
+        </label>
+        <label>Email for the reply
+          <input type="email" name="email" required autocomplete="email">
+        </label>
+        <label>Topic
+          <select name="topic" id="contact-topic">
+            <option>Publishing and promotion</option>
+            <option>Stream or review</option>
+            <option>Press</option>
+            <option>Art, music, voice</option>
+            <option value="bug">Bug in the game</option>
+            <option>Other</option>
+          </select>
+        </label>
+        <label>Message
+          <textarea name="message" id="contact-message" required></textarea>
+        </label>
+        <button type="submit">Send</button>
+        <p class="status" id="contact-status" role="status"></p>
+      </form>
+      <div class="comms"><span class="who">OVERWATCH · ON AIR</span>Channel open. Keep it to the point — we don’t answer mutants.</div>
+    </div></article>
+  </div>
+</section>
+<script>
+(function () {
+  var form = document.getElementById('contact-form');
+  var status = document.getElementById('contact-status');
+  var button = form.querySelector('button');
+  // A bug report gets its own subject (easy to filter in the mail) and a hint what to tell.
+  var topic = document.getElementById('contact-topic');
+  var subject = document.getElementById('contact-subject');
+  var message = document.getElementById('contact-message');
+  function onTopic() {
+    var bug = topic.value === 'bug';
+    subject.value = bug ? 'After Paradise: bug in the game (EN)' : 'After Paradise: message from the journal (EN)';
+    message.placeholder = bug ? 'Demo version, mission and round, what you did and what went wrong' : '';
+  }
+  topic.addEventListener('change', onTopic);
+  // A link to #bug opens the form ready for a bug report.
+  if (location.hash === '#bug') { topic.value = 'bug'; onTopic(); }
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    button.disabled = true;
+    status.className = 'status';
+    status.textContent = 'Sending…';
+    fetch(form.action, { method: 'POST', headers: { 'Accept': 'application/json' }, body: new FormData(form) })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.success) throw new Error(data.message || 'fail');
+        form.reset();
+        status.className = 'status ok';
+        status.textContent = 'Message sent. Thank you! We’ll reply to the email you gave.';
+      })
+      .catch(function () {
+        status.className = 'status err';
+        status.textContent = 'Couldn’t send. Check your connection and try again.';
+      })
+      .finally(function () { button.disabled = false; });
+  });
+})();
+</script>
+
+</main>
+
+<footer>
+  <div class="wrap">After Paradise · Godot 4 · Terra, drop sector. The art is made with AI. The journal is updated after every working day.</div>
+</footer>
+
+<button type="button" class="to-top" id="to-top" hidden aria-label="Back to top">↑ Top</button>
+
+<div class="zoom" id="zoom" hidden role="dialog" aria-modal="true" aria-label="Enlarged picture">
+  <button type="button" id="zoom-close">Close</button>
+  <img id="zoom-img" alt="">
+</div>
+<script>
+(function () {
+  var box = document.getElementById('zoom');
+  var big = document.getElementById('zoom-img');
+  function close() { box.hidden = true; big.removeAttribute('src'); }
+  document.querySelectorAll('.shot img, .entry figure img, .sheets img').forEach(function (img) {
+    img.tabIndex = 0;
+    function open() { big.src = img.currentSrc || img.src; big.alt = img.alt; box.hidden = false; document.getElementById('zoom-close').focus(); }
+    img.addEventListener('click', open);
+    img.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+  });
+  box.addEventListener('click', close);
+  var top = document.getElementById('to-top');
+  function toggleTop() { top.hidden = window.scrollY < 600; }
+  window.addEventListener('scroll', toggleTop, { passive: true });
+  toggleTop();
+  top.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !box.hidden) close(); });
+})();
+</script>
+
+</body>
+</html>

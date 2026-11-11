@@ -4,7 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Пошаговая тактика про отряд мехов на Земле после «рая». Журнал разработки: что уже работает, какие миссии готовы.">
+<link rel="canonical" href="https://afterparadisegame.github.io/">
+<link rel="alternate" hreflang="ru" href="https://afterparadisegame.github.io/">
+<link rel="alternate" hreflang="en" href="https://afterparadisegame.github.io/en/">
+<link rel="alternate" hreflang="x-default" href="https://afterparadisegame.github.io/en/">
 <meta property="og:type" content="website">
+<meta property="og:locale" content="ru_RU">
 <meta property="og:title" content="After Paradise — бортовой журнал">
 <meta property="og:description" content="Пошаговая тактика про отряд мехов на Земле после «рая». Журнал разработки: что уже работает, какие миссии готовы.">
 <meta property="og:url" content="https://afterparadisegame.github.io/">
@@ -331,12 +336,22 @@ footer .wrap { border-top: 1px solid var(--steel); padding-top: 18px; }
   box-shadow: 0 0 40px rgba(79,214,255,.12);
 }
 .intro-cap { margin-top: 10px; color: var(--muted, #8a979e); font-size: 14px; }
+
+.lang-switch {
+  position: absolute; z-index: 3;
+  top: max(14px, env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+  font: 600 13px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--cyan); text-decoration: none;
+  background: rgba(10,15,19,.7); border: 1px solid var(--cyan-deep); padding: 10px 12px;
+}
+.lang-switch:hover { color: var(--ink); border-color: var(--cyan); }
 </style>
 </head>
 <body>
 
 
 <header class="hero">
+  <a class="lang-switch" href="en/" hreflang="en" lang="en">English</a>
   <img class="bg" src="img/hero.jpg" alt="">
   <div class="wrap">
     <div class="eyebrow">Iron Rain · бортовой журнал разработки</div>
